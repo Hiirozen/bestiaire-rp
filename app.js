@@ -11,9 +11,11 @@ const searchInput = document.querySelector('#search-input');
 const filters = document.querySelector('#filters');
 const reader = document.querySelector('#reader-dialog');
 const imageDialog = document.querySelector('#image-dialog');
+const editStorageKey = 'havengard-creature-edits-v1';
 let activeFilter = 'all';
 let activeSection = 'bestiaire';
 let searchTerm = '';
+let currentCreature = null;
 
 const imagePath = (number) => `public/images/image-${number}.jpg`;
 
@@ -53,7 +55,122 @@ function renderFactGrid(creature) {
     ['size', 'Taille'], ['weight', 'Poids'], ['classification', 'Classification'],
     ['origin', 'Origine'], ['habitat', 'Habitat'], ['status', 'Statut']
   ];
-  return labels.map(([key, label]) => `<div class="fact"><dt>${label}</dt><dd>${escapeHtml(creature.facts?.[key] || 'Non précisé sur la planche')}</dd></div>`).join('');
+  return labels.map(([key, label]) => `<div class="fact"><dt>${label}</dt><dd>${escapeHtml(readFact(creature, key))}</dd></div>`).join('');
+}
+
+const factAliases = {
+  size: ['size', 'taille'], weight: ['weight', 'poids'], classification: ['classification'],
+  origin: ['origin', 'origine'], habitat: ['habitat'], status: ['status', 'statut']
+};
+
+const publishedFactAliases = {
+  size: 'taille', weight: 'poids', classification: 'classification',
+  origin: 'origine', habitat: 'habitat', status: 'statut'
+};
+
+function readFact(creature, key) {
+  const facts = creature.facts || {};
+  for (const alias of factAliases[key] || [key]) {
+    if (!Object.prototype.hasOwnProperty.call(facts, alias)) continue;
+    const value = String(facts[alias] ?? '').trim();
+    return value || 'Non précisé sur la planche';
+  }
+  return 'Non précisé sur la planche';
+}
+
+function editorFactValue(creature, key) {
+  const value = readFact(creature, key);
+  return /^non\s+(précis|spécifi|renseign)/iu.test(value) ? '' : value;
+}
+
+function loadSavedEdits() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(editStorageKey) || '{}');
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveEdits(edits) {
+  localStorage.setItem(editStorageKey, JSON.stringify(edits));
+}
+
+function applySavedEdits() {
+  const edits = loadSavedEdits();
+  CREATURES.forEach((creature) => {
+    const edit = edits[creature.id];
+    if (!edit || typeof edit !== 'object') return;
+    ['title', 'latin', 'subtitle', 'description'].forEach((key) => {
+      if (typeof edit[key] === 'string') creature[key] = edit[key];
+    });
+    if (edit.facts && typeof edit.facts === 'object') {
+      creature.facts = { ...(creature.facts || {}), ...edit.facts };
+      if (creature.publishedFacts) {
+        Object.entries(publishedFactAliases).forEach(([key, alias]) => {
+          if (Object.prototype.hasOwnProperty.call(creature.publishedFacts, alias)
+            && Object.prototype.hasOwnProperty.call(edit.facts, key)) {
+            creature.publishedFacts[alias] = edit.facts[key];
+          }
+        });
+      }
+    }
+  });
+}
+
+function populateEditor(creature) {
+  const form = document.querySelector('#reader-editor');
+  ['title', 'latin', 'subtitle', 'description'].forEach((key) => {
+    form.elements.namedItem(key).value = creature[key] || '';
+  });
+  Object.keys(factAliases).forEach((key) => {
+    form.elements.namedItem(key).value = editorFactValue(creature, key);
+  });
+}
+
+function setEditorMode(editing) {
+  document.querySelector('#reader-view').hidden = editing;
+  document.querySelector('#reader-editor').hidden = !editing;
+  document.querySelector('#edit-entry').hidden = editing;
+  document.querySelector('#reader-save-status').hidden = true;
+  if (editing && currentCreature) {
+    document.querySelector('#editor-status').textContent = '';
+    populateEditor(currentCreature);
+  }
+}
+
+function exportSavedEdits() {
+  const edits = loadSavedEdits();
+  const payload = JSON.stringify({ format: 'havengard-edits-v1', edits }, null, 2);
+  const url = URL.createObjectURL(new Blob([payload], { type: 'application/json' }));
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'havengard-modifications.json';
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function importSavedEdits(file) {
+  const status = document.querySelector('#editor-status');
+  file.text().then((contents) => {
+    const payload = JSON.parse(contents);
+    if (payload.format !== 'havengard-edits-v1' || !payload.edits || typeof payload.edits !== 'object') {
+      throw new Error('Format de sauvegarde invalide.');
+    }
+    const knownIds = new Set(CREATURES.map((creature) => creature.id));
+    const imported = Object.fromEntries(Object.entries(payload.edits).filter(([id, edit]) => knownIds.has(id) && edit && typeof edit === 'object'));
+    saveEdits({ ...loadSavedEdits(), ...imported });
+    applySavedEdits();
+    renderGrid();
+    if (currentCreature) {
+      currentCreature = CREATURES.find((creature) => creature.id === currentCreature.id);
+      populateEditor(currentCreature);
+      renderReader(currentCreature);
+    }
+    status.textContent = 'Sauvegarde importée et enregistrée dans ce navigateur.';
+  }).catch(() => {
+    status.textContent = 'Impossible de lire ce fichier. Choisis une sauvegarde Havengard au format JSON.';
+  });
 }
 
 function renderOriginalNotes(creature) {
@@ -72,7 +189,7 @@ function renderOriginalNotes(creature) {
   return `<details class="original-details"><summary>Notes détaillées conservées</summary>${provenanceHtml}${note ? `<div class="original-text">${noteHtml}</div>` : ''}${factsHtml ? `<dl class="original-facts">${factsHtml}</dl>` : ''}</details>`;
 }
 
-function openReader(creature) {
+function renderReader(creature) {
   document.querySelector('#reader-title').textContent = creature.title;
   document.querySelector('#reader-latin').textContent = creature.latin || 'Notice illustrée';
   document.querySelector('#reader-alias').textContent = creature.sourceTitle ? `Autre nom conservé : ${creature.sourceTitle}` : '';
@@ -82,6 +199,13 @@ function openReader(creature) {
   document.querySelector('#reader-pages').innerHTML = creature.files.length
     ? creature.files.map((number, index) => `<figure><img src="${imagePath(number)}" alt="${escapeHtml(creature.title)} — planche ${index + 1}" data-zoom="${number}"><figcaption>Planche ${index + 1} · image source ${number}</figcaption></figure>`).join('')
     : '<p class="no-pages">Aucune planche correspondante dans le dossier d’images. Les notes de la notice sont conservées ci-dessus.</p>';
+}
+
+function openReader(creature) {
+  currentCreature = creature;
+  renderReader(creature);
+  document.querySelector('#reader-save-status').hidden = true;
+  setEditorMode(false);
   reader.showModal();
 }
 
@@ -151,6 +275,52 @@ document.querySelector('.close-reader').addEventListener('click', () => reader.c
 document.querySelector('.close-image').addEventListener('click', () => imageDialog.close());
 reader.addEventListener('click', (event) => { if (event.target === reader) reader.close(); });
 imageDialog.addEventListener('click', (event) => { if (event.target === imageDialog) imageDialog.close(); });
+
+document.querySelector('#edit-entry').addEventListener('click', () => setEditorMode(true));
+document.querySelector('#cancel-edit').addEventListener('click', () => setEditorMode(false));
+document.querySelector('#export-edits').addEventListener('click', exportSavedEdits);
+document.querySelector('#import-edits').addEventListener('change', (event) => {
+  const file = event.target.files?.[0];
+  if (file) importSavedEdits(file);
+  event.target.value = '';
+});
+document.querySelector('#reader-editor').addEventListener('submit', (event) => {
+  event.preventDefault();
+  if (!currentCreature) return;
+  const data = new FormData(event.currentTarget);
+  const facts = Object.fromEntries(Object.keys(factAliases).map((key) => [key, String(data.get(key) || '').trim()]));
+  const edit = {
+    title: String(data.get('title') || '').trim(),
+    latin: String(data.get('latin') || '').trim(),
+    subtitle: String(data.get('subtitle') || '').trim(),
+    description: String(data.get('description') || '').trim(),
+    facts
+  };
+  const edits = loadSavedEdits();
+  edits[currentCreature.id] = edit;
+  try {
+    saveEdits(edits);
+  } catch {
+    document.querySelector('#editor-status').textContent = 'La sauvegarde locale est indisponible dans ce navigateur.';
+    return;
+  }
+  Object.assign(currentCreature, edit);
+  currentCreature.facts = { ...(currentCreature.facts || {}), ...facts };
+  if (currentCreature.publishedFacts) {
+    Object.entries(publishedFactAliases).forEach(([key, alias]) => {
+      if (Object.prototype.hasOwnProperty.call(currentCreature.publishedFacts, alias)) {
+        currentCreature.publishedFacts[alias] = facts[key];
+      }
+    });
+  }
+  renderGrid();
+  renderReader(currentCreature);
+  setEditorMode(false);
+  const saveStatus = document.querySelector('#reader-save-status');
+  saveStatus.textContent = 'Modifications enregistrées dans ce navigateur.';
+  saveStatus.hidden = false;
+});
+
 document.addEventListener('keydown', (event) => {
   if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
     event.preventDefault();
@@ -159,6 +329,6 @@ document.addEventListener('keydown', (event) => {
   }
 });
 
+applySavedEdits();
 bindBestiaryControls();
 renderGrid();
-

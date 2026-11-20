@@ -175,3 +175,31 @@ h1 { margin: 13px 0 7px; color: #f2eedf; font: 500 clamp(36px, 4.5vw, 58px)/1.1 
 }
 @media (max-width: 430px) { .intro-row { align-items: flex-start; } .archive-stamp { margin-top: 8px; } .collection-strip { flex-wrap: wrap; } .collection-strip p { width: 100%; } .creature-grid { grid-template-columns: 1fr; } .card-art { aspect-ratio: 5 / 3; } .results-heading span { display: none; } .page-footer { flex-direction: column; } }
 
+.reader-dialog { overflow-y: auto; }
+.reader-actions { display: flex; align-items: center; gap: 8px; }
+.edit-button, .quiet-button { display: inline-flex; align-items: center; justify-content: center; min-height: 34px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 5px; font: inherit; font-size: 10px; cursor: pointer; text-decoration: none; }
+.edit-button { border-color: var(--gold); background: var(--gold); color: #151a15; font-weight: 700; }
+.edit-button:hover { background: #e6ca91; }
+.quiet-button { background: rgba(255,255,255,.035); color: #c3c9ba; }
+.quiet-button:hover { border-color: var(--gold); color: var(--gold-soft); }
+.reader-save-status { margin: 13px 0 0; color: var(--gold-soft); font-size: 11px; }
+.reader-editor { margin-top: 15px; }
+.editor-intro { margin: 0 0 14px; color: #aeb7a8; font-size: 11px; line-height: 1.6; }
+.editor-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
+.editor-grid label { display: grid; gap: 5px; color: var(--gold-soft); font-size: 9px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.editor-grid .editor-wide { grid-column: 1 / -1; }
+.editor-grid input, .editor-grid textarea { width: 100%; min-height: 36px; padding: 9px 10px; border: 1px solid var(--line); border-radius: 5px; outline: none; background: #151e19; color: var(--ink); font: 400 12px/1.5 var(--sans); letter-spacing: normal; text-transform: none; }
+.editor-grid textarea { resize: vertical; }
+.editor-grid input:focus, .editor-grid textarea:focus { border-color: var(--gold); }
+.editor-storage-note { margin: 13px 0 5px; color: #8f9b90; font-size: 10px; line-height: 1.6; }
+.editor-status { min-height: 15px; margin: 0; color: var(--gold-soft); font-size: 10px; }
+.editor-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 7px; margin-top: 10px; }
+.import-button { position: relative; overflow: hidden; }
+.import-button input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+@media (max-width: 620px) {
+  .reader-actions { align-items: flex-start; }
+  .reader-actions .edit-button { max-width: 126px; }
+  .editor-grid { grid-template-columns: 1fr; }
+  .editor-grid .editor-wide { grid-column: auto; }
+  .editor-actions > * { flex: 1 1 42%; }
+}

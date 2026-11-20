@@ -7,9 +7,9 @@
     <meta name="description" content="Les archives magiques de Havengard : bestiaire illustré et ressources de cours." />
     <title>Archives de Havengard — Bestiaire</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="styles.css?v=20261120-2" />
-    <script src="catalog.js?v=20261120-2" defer></script>
-    <script src="app.js?v=20261120-2" defer></script>
+    <link rel="stylesheet" href="styles.css?v=20261121-edit1" />
+    <script src="catalog.js?v=20261121-edit1" defer></script>
+    <script src="app.js?v=20261121-edit1" defer></script>
   </head>
   <body>
     <div class="site-shell">
@@ -90,13 +90,42 @@
     <dialog class="reader-dialog" id="reader-dialog" aria-labelledby="reader-title">
       <div class="reader-topline">
         <div><p class="eyebrow">NOTICE DU BESTIAIRE</p><h2 id="reader-title"></h2><p class="reader-latin" id="reader-latin"></p><p class="reader-alias" id="reader-alias"></p></div>
-        <button class="icon-button close-reader" type="button" aria-label="Fermer la notice">×</button>
+        <div class="reader-actions">
+          <button class="edit-button" id="edit-entry" type="button">Modifier la fiche</button>
+          <button class="icon-button close-reader" type="button" aria-label="Fermer la notice">×</button>
+        </div>
       </div>
-      <p class="reader-description" id="reader-description"></p>
-      <div class="fact-grid" id="fact-grid"></div>
-      <div class="reader-extra" id="reader-extra"></div>
-      <p class="source-note">Lecture des planches originales — cliquez sur une image pour l’agrandir.</p>
-      <div class="reader-pages" id="reader-pages"></div>
+      <p class="reader-save-status" id="reader-save-status" role="status" aria-live="polite" hidden></p>
+      <div id="reader-view">
+        <p class="reader-description" id="reader-description"></p>
+        <div class="fact-grid" id="fact-grid"></div>
+        <div class="reader-extra" id="reader-extra"></div>
+        <p class="source-note">Lecture des planches originales — cliquez sur une image pour l’agrandir.</p>
+        <div class="reader-pages" id="reader-pages"></div>
+      </div>
+      <form class="reader-editor" id="reader-editor" hidden>
+        <p class="editor-intro">Renseigne les informations connues. Les champs laissés vides restent marqués comme non renseignés.</p>
+        <div class="editor-grid">
+          <label>Nom usuel<input name="title" maxlength="120" required /></label>
+          <label>Nom latin<input name="latin" maxlength="160" /></label>
+          <label class="editor-wide">Surnom ou appellation<input name="subtitle" maxlength="180" /></label>
+          <label class="editor-wide">Description<textarea name="description" rows="3" maxlength="2000"></textarea></label>
+          <label>Taille<input name="size" maxlength="300" /></label>
+          <label>Poids<input name="weight" maxlength="300" /></label>
+          <label>Classification<input name="classification" maxlength="300" /></label>
+          <label>Origine<input name="origin" maxlength="300" /></label>
+          <label>Habitat<input name="habitat" maxlength="300" /></label>
+          <label>Statut<input name="status" maxlength="300" /></label>
+        </div>
+        <p class="editor-storage-note">Enregistré dans ce navigateur. Pour partager les changements sur le site public, exporte la sauvegarde et transmets-la.</p>
+        <p class="editor-status" id="editor-status" role="status" aria-live="polite"></p>
+        <div class="editor-actions">
+          <button class="quiet-button" id="cancel-edit" type="button">Annuler</button>
+          <label class="quiet-button import-button">Importer une sauvegarde<input id="import-edits" type="file" accept="application/json,.json" /></label>
+          <button class="quiet-button" id="export-edits" type="button">Exporter mes modifications</button>
+          <button class="edit-button" type="submit">Enregistrer</button>
+        </div>
+      </form>
     </dialog>
 
     <dialog class="image-dialog" id="image-dialog" aria-label="Planche agrandie">
@@ -107,4 +136,3 @@
     <script id="empty-page-template" type="text/template"></script>
   </body>
 </html>
-
