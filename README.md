@@ -1,4 +1,3 @@
-Attempting to perform the InitializeDefaultDrives operation on the 'FileSystem' provider failed.
 # Archives de Havengard
 
 Site statique pour parcourir les planches illustrées du dossier `Bestiaire_RP_Light/images`.
@@ -18,5 +17,5 @@ Ouvrir `index.html` dans un navigateur. Le site n’utilise pas de compilation n
 
 ## Publication
 
-Le workflow `.github/workflows/pages.yml` publie le site avec GitHub Pages sur chaque push vers `main` ou `master`. Après avoir ajouté ce dépôt à GitHub, activer Pages avec la source **GitHub Actions** dans les paramètres du dépôt.
+Le dépôt utilise déjà le déploiement GitHub Pages configuré pour sa branche principale. Chaque mise à jour de `main` déclenche la publication automatique.
 
