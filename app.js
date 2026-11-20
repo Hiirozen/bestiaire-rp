@@ -27,7 +27,7 @@ function cardTemplate(creature) {
   const image = creature.files.length
     ? `<img src="${imagePath(creature.files[0])}" alt="Planche illustrée : ${escapeHtml(creature.title)}" loading="lazy">`
     : '<div class="card-placeholder"><span>✧</span><small>Notice textuelle<br>sans planche associée</small></div>';
-  const description = [creature.subtitle, creature.description].filter(Boolean).join(' · ');
+  const description = [creature.subtitle, creature.summary || creature.description].filter(Boolean).join(' · ');
   return `<article class="creature-card" tabindex="0" role="button" aria-label="Ouvrir la notice ${escapeHtml(creature.title)}" data-creature="${creature.id}">
     <div class="card-art">${image}<span class="card-kind">${escapeHtml(creature.kind)}</span></div>
     <div class="card-body"><div class="card-heading"><h3>${escapeHtml(creature.title)}</h3><span class="open-mark" aria-hidden="true">↗</span></div>
@@ -101,9 +101,10 @@ function applySavedEdits() {
   CREATURES.forEach((creature) => {
     const edit = edits[creature.id];
     if (!edit || typeof edit !== 'object') return;
-    ['title', 'latin', 'subtitle', 'description'].forEach((key) => {
+    ['title', 'latin', 'subtitle', 'summary'].forEach((key) => {
       if (typeof edit[key] === 'string') creature[key] = edit[key];
     });
+    if (typeof edit.summary !== 'string' && typeof edit.description === 'string') creature.summary = edit.description;
     if (edit.facts && typeof edit.facts === 'object') {
       creature.facts = { ...(creature.facts || {}), ...edit.facts };
       if (creature.publishedFacts) {
@@ -120,9 +121,10 @@ function applySavedEdits() {
 
 function populateEditor(creature) {
   const form = document.querySelector('#reader-editor');
-  ['title', 'latin', 'subtitle', 'description'].forEach((key) => {
+  ['title', 'latin', 'subtitle'].forEach((key) => {
     form.elements.namedItem(key).value = creature[key] || '';
   });
+  form.elements.namedItem('summary').value = creature.summary || creature.description || '';
   Object.keys(factAliases).forEach((key) => {
     form.elements.namedItem(key).value = editorFactValue(creature, key);
   });
@@ -193,7 +195,8 @@ function renderReader(creature) {
   document.querySelector('#reader-title').textContent = creature.title;
   document.querySelector('#reader-latin').textContent = creature.latin || 'Notice illustrée';
   document.querySelector('#reader-alias').textContent = creature.sourceTitle ? `Autre nom conservé : ${creature.sourceTitle}` : '';
-  document.querySelector('#reader-description').textContent = [creature.subtitle, creature.description].filter(Boolean).join(' — ');
+  document.querySelector('#reader-tagline').textContent = creature.subtitle || '';
+  document.querySelector('#reader-description').textContent = creature.summary || creature.description || 'Résumé à compléter.';
   document.querySelector('#fact-grid').innerHTML = renderFactGrid(creature);
   document.querySelector('#reader-extra').innerHTML = renderOriginalNotes(creature);
   document.querySelector('#reader-pages').innerHTML = creature.files.length
@@ -293,7 +296,7 @@ document.querySelector('#reader-editor').addEventListener('submit', (event) => {
     title: String(data.get('title') || '').trim(),
     latin: String(data.get('latin') || '').trim(),
     subtitle: String(data.get('subtitle') || '').trim(),
-    description: String(data.get('description') || '').trim(),
+    summary: String(data.get('summary') || '').trim(),
     facts
   };
   const edits = loadSavedEdits();

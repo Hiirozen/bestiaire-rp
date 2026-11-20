@@ -177,6 +177,9 @@ h1 { margin: 13px 0 7px; color: #f2eedf; font: 500 clamp(36px, 4.5vw, 58px)/1.1 
 
 .reader-dialog { overflow-y: auto; }
 .reader-actions { display: flex; align-items: center; gap: 8px; }
+.reader-tagline { margin: 15px 0 5px; color: #b4a37e; font: italic 12px var(--serif); }
+.summary-eyebrow { margin: 10px 0 0; color: var(--gold-soft); }
+#reader-view .reader-description { margin-top: 5px; }
 .edit-button, .quiet-button { display: inline-flex; align-items: center; justify-content: center; min-height: 34px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 5px; font: inherit; font-size: 10px; cursor: pointer; text-decoration: none; }
 .edit-button { border-color: var(--gold); background: var(--gold); color: #151a15; font-weight: 700; }
 .edit-button:hover { background: #e6ca91; }

@@ -7,9 +7,9 @@
     <meta name="description" content="Les archives magiques de Havengard : bestiaire illustré et ressources de cours." />
     <title>Archives de Havengard — Bestiaire</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="styles.css?v=20261121-edit1" />
-    <script src="catalog.js?v=20261121-edit1" defer></script>
-    <script src="app.js?v=20261121-edit1" defer></script>
+    <link rel="stylesheet" href="styles.css?v=20261121-summary1" />
+    <script src="catalog.js?v=20261121-summary1" defer></script>
+    <script src="app.js?v=20261121-summary1" defer></script>
   </head>
   <body>
     <div class="site-shell">
@@ -97,6 +97,8 @@
       </div>
       <p class="reader-save-status" id="reader-save-status" role="status" aria-live="polite" hidden></p>
       <div id="reader-view">
+        <p class="reader-tagline" id="reader-tagline"></p>
+        <p class="eyebrow summary-eyebrow">RÉSUMÉ</p>
         <p class="reader-description" id="reader-description"></p>
         <div class="fact-grid" id="fact-grid"></div>
         <div class="reader-extra" id="reader-extra"></div>
@@ -109,7 +111,7 @@
           <label>Nom usuel<input name="title" maxlength="120" required /></label>
           <label>Nom latin<input name="latin" maxlength="160" /></label>
           <label class="editor-wide">Surnom ou appellation<input name="subtitle" maxlength="180" /></label>
-          <label class="editor-wide">Description<textarea name="description" rows="3" maxlength="2000"></textarea></label>
+          <label class="editor-wide">Résumé<textarea name="summary" rows="3" maxlength="2000" required></textarea></label>
           <label>Taille<input name="size" maxlength="300" /></label>
           <label>Poids<input name="weight" maxlength="300" /></label>
           <label>Classification<input name="classification" maxlength="300" /></label>
