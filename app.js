@@ -27,7 +27,7 @@ function cardTemplate(creature) {
   const image = creature.files.length
     ? `<img src="${imagePath(creature.files[0])}" alt="Planche illustrée : ${escapeHtml(creature.title)}" loading="lazy">`
     : '<div class="card-placeholder"><span>✧</span><small>Notice textuelle<br>sans planche associée</small></div>';
-  const description = [creature.subtitle, creature.summary || creature.description].filter(Boolean).join(' · ');
+  const description = [creature.subtitle, creature.description].filter(Boolean).join(' · ');
   return `<article class="creature-card" tabindex="0" role="button" aria-label="Ouvrir la notice ${escapeHtml(creature.title)}" data-creature="${creature.id}">
     <div class="card-art">${image}<span class="card-kind">${escapeHtml(creature.kind)}</span></div>
     <div class="card-body"><div class="card-heading"><h3>${escapeHtml(creature.title)}</h3><span class="open-mark" aria-hidden="true">↗</span></div>

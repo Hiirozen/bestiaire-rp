@@ -5,7 +5,7 @@ Site statique pour parcourir les planches illustrées du dossier `Bestiaire_RP_L
 ## Contenu
 
 - 46 notices, dont les 45 notices du fichier `bestiaire.html` et une notice issue de la planche de Féraluna.
-- Chaque notice possède un résumé distinct, repris des descriptions du bestiaire.
+- Chaque notice possède un résumé développé à partir de sa description et des informations disponibles dans les champs de la fiche.
 - 50 planches originales copiées dans `public/images/`.
 - Les textes détaillés déjà présents dans la version GitHub sont conservés dans les notices concernées.
 - Filtres, recherche par nom, surnom, espèce et résumé, et une vue détaillée pour chaque notice.
