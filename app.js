@@ -356,6 +356,7 @@ function openPotion(potion) {
 function potionTemplate(potion) {
   const details = [
     ['Origines', potion.origin],
+    ['Ouvrage / source', potion.source],
     ['Utilisation', potion.usage],
     ['Posologie', potion.dosage],
     ['Apparence', potion.appearance],
@@ -373,7 +374,9 @@ function potionTemplate(potion) {
   const conservation = potion.conservation ? `<section class="potion-note"><h3>Conservation</h3><p>${escapeHtml(potion.conservation)}</p></section>` : '';
   const particularity = potion.particularity ? `<section class="potion-note"><h3>Particularité</h3><p>${escapeHtml(potion.particularity)}</p></section>` : '';
   const testimony = potion.testimony ? `<blockquote class="potion-testimony"><p class="eyebrow">TÉMOIGNAGE</p><p>${escapeHtml(potion.testimony)}</p></blockquote>` : '';
-  const plate = potion.plate ? `<figure class="potion-original-plate"><img src="${escapeHtml(potion.plate)}" alt="Planche originale de la potion ${escapeHtml(potion.name)}" loading="lazy"><figcaption>Planche originale versée aux archives</figcaption></figure>` : '';
+  const history = potion.history ? '<section class="potion-note potion-history"><h3>Histoire et témoignages</h3><p>'+escapeHtml(potion.history)+'</p></section>' : '';
+  const plates = (potion.plates || (potion.plate ? [potion.plate] : [])).filter(Boolean);
+  const plate = plates.length ? '<section class="potion-plates-section"><h3>Planches originales</h3><div class="potion-original-plates">'+plates.map((src,index) => '<figure class="potion-original-plate"><img src="'+escapeHtml(src)+'" alt="Planche '+String(index+1).padStart(2,'0')+' de la potion '+escapeHtml(potion.name)+'" loading="lazy"><figcaption>Planche '+String(index+1).padStart(2,'0')+' · archive originale</figcaption></figure>').join('')+'</div></section>' : '';
   const variant = potion.variant ? `<aside class="potion-variant"><div><p class="eyebrow">VARIANTE</p><h3>${escapeHtml(potion.variant.name)}</h3><p>${escapeHtml(potion.variant.description)}</p></div><span aria-hidden="true">✦ ✦</span></aside>` : '';
   const incantation = potion.incantation ? `<p class="potion-incantation"><span>Incantation${potion.incantationDuration ? ` · ${escapeHtml(potion.incantationDuration)} s` : ''}</span><strong>${escapeHtml(potion.incantation)}</strong></p>` : '';
   const totalTime = potion.totalTime ? `<p class="potion-total-time">Durée totale : ${escapeHtml(potion.totalTime)}</p>` : '';
@@ -387,7 +390,7 @@ function potionTemplate(potion) {
       <section class="potion-section"><h3>Ingrédients</h3><ul class="potion-ingredients">${potion.ingredients.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul></section>
       <section class="potion-section"><h3>Préparation</h3><ol class="potion-steps">${steps.map((step) => `<li><span>${escapeHtml(step.text)}</span>${step.duration ? `<small>${escapeHtml(step.duration)} s</small>` : ''}</li>`).join('')}</ol>${incantation}${totalTime}${finishing}</section>
     </div>
-    ${limitations}${sideEffects}${conservation}${particularity}${variant}${testimony}${plate}
+    ${history}${limitations}${sideEffects}${conservation}${particularity}${variant}${testimony}${plate}
     <div class="potion-sheet-actions"><button class="edit-button" type="button" data-edit-potion="${escapeHtml(potion.id)}">Modifier cette fiche</button></div>
   </article>`;
 }
@@ -404,10 +407,12 @@ function potionFormFields(potion = {}) {
   const ingredients = (potion.ingredients || []).join('\n');
   const preparation = (potion.preparation || []).map((step) => typeof step === 'string' ? step : `${step.text}${step.duration ? ` | ${step.duration}` : ''}`).join('\n');
   const sideEffects = (potion.sideEffects || []).join('\n');
+  const plates = (potion.plates || (potion.plate ? [potion.plate] : [])).join('\n');
   return `<div class="editor-grid">
     ${fieldInput('Nom de la potion', 'name', potion.name)}${fieldInput('Type', 'type', potion.type)}
     ${fieldInput('Sous-catégorie', 'subcategory', potion.subcategory)}${fieldInput('Fonction', 'function', potion.function)}
     ${fieldArea('Description', 'description', potion.description)}${fieldInput('Origines', 'origin', potion.origin)}
+    ${fieldInput('Ouvrage / source', 'source', potion.source, false)}${fieldArea('Histoire et témoignages', 'history', potion.history, false, 8)}
     ${fieldArea('Utilisation', 'usage', potion.usage, false)}${fieldInput('Posologie', 'dosage', potion.dosage, false)}
     ${fieldArea('Apparence', 'appearance', potion.appearance, false)}${fieldInput('Couleur', 'color', potion.color, false)}
     ${fieldInput('Texture', 'texture', potion.texture, false)}${fieldInput('Odeur', 'aroma', potion.aroma, false)}
@@ -418,7 +423,7 @@ function potionFormFields(potion = {}) {
     ${fieldInput('Durée totale', 'totalTime', potion.totalTime, false)}${fieldInput('Instructions finales', 'finishing', potion.finishing, false)}
     ${fieldArea('Effets secondaires et précautions (un par ligne)', 'sideEffects', sideEffects)}${fieldArea('Conservation', 'conservation', potion.conservation, false)}
     ${fieldArea('Particularité', 'particularity', potion.particularity, false)}${fieldArea('Témoignage', 'testimony', potion.testimony, false)}
-    ${fieldInput('Planche d’origine (URL ou chemin du fichier)', 'plate', potion.plate, true)}
+    ${fieldArea('Planches originales (URL ou chemin du fichier, une par ligne)', 'plates', plates, false, 5)}
     ${fieldInput('Nom de la variante', 'variantName', potion.variant?.name, false)}${fieldArea('Description de la variante', 'variantDescription', potion.variant?.description, false)}
   </div>`;
 }
@@ -480,13 +485,14 @@ function saveContentEditor(form) {
     const id = context.id || `custom-potion-${Date.now()}`;
     const potion = {
       id, name, type: value('type'), subcategory: value('subcategory'), function: value('function'),
-      description: value('description'), origin: value('origin'), usage: value('usage'), dosage: value('dosage'),
+      description: value('description'), origin: value('origin'), source: value('source'), history: value('history'), usage: value('usage'), dosage: value('dosage'),
       limitations: value('limitations'), appearance: value('appearance'), color: value('color'), texture: value('texture'),
       aroma: value('aroma'), taste: value('taste'), temperature: value('temperature'), contact: value('contact'),
       ingredients: parseLineList(value('ingredients')), preparation: parsePotionSteps(value('preparation')),
       incantation: value('incantation'), incantationDuration: value('incantationDuration') ? Number(value('incantationDuration')) : '',
       totalTime: value('totalTime'), finishing: value('finishing'), sideEffects: parseLineList(value('sideEffects')),
-      conservation: value('conservation'), particularity: value('particularity'), testimony: value('testimony'), plate: value('plate')
+      conservation: value('conservation'), particularity: value('particularity'), testimony: value('testimony'),
+      plates: parseLineList(value('plates'))
     };
     if (value('variantName') || value('variantDescription')) potion.variant = { name: value('variantName'), description: value('variantDescription') };
     const newIndex = state.newPotions.findIndex((item) => item.id === id);
