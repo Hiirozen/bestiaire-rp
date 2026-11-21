@@ -306,3 +306,6 @@ h1 { margin: 13px 0 7px; color: #f2eedf; font: 500 clamp(36px, 4.5vw, 58px)/1.1 
 .potion-original-plate { width: 100%; margin: 0; }
 .potion-original-plate img { display: block; width: 100%; max-height: 72vh; object-fit: contain; background: #171b18; border: 1px solid var(--line); border-radius: 5px; }
 .potion-original-plate figcaption { margin-top: 7px; color: #929b8d; font-size: 10px; text-align: center; }
+
+.image-zoom-trigger { display: block; width: 100%; padding: 0; border: 0; border-radius: 5px; background: transparent; cursor: zoom-in; }
+.image-zoom-trigger:focus-visible { outline: 2px solid var(--gold, #d9b878); outline-offset: 3px; }

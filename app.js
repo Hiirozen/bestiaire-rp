@@ -376,7 +376,7 @@ function potionTemplate(potion) {
   const testimony = potion.testimony ? `<blockquote class="potion-testimony"><p class="eyebrow">TÉMOIGNAGE</p><p>${escapeHtml(potion.testimony)}</p></blockquote>` : '';
   const history = potion.history ? '<section class="potion-note potion-history"><h3>Histoire et témoignages</h3><p>'+escapeHtml(potion.history)+'</p></section>' : '';
   const plates = (potion.plates || (potion.plate ? [potion.plate] : [])).filter(Boolean);
-  const plate = plates.length ? '<section class="potion-plates-section"><h3>Planches originales</h3><div class="potion-original-plates">'+plates.map((src,index) => '<figure class="potion-original-plate"><img src="'+escapeHtml(src)+'" alt="Planche '+String(index+1).padStart(2,'0')+' de la potion '+escapeHtml(potion.name)+'" loading="lazy"><figcaption>Planche '+String(index+1).padStart(2,'0')+' · archive originale</figcaption></figure>').join('')+'</div></section>' : '';
+  const plate = plates.length ? '<section class="potion-plates-section"><h3>Planches originales</h3><div class="potion-original-plates">'+plates.map((src,index) => '<figure class="potion-original-plate"><button class="image-zoom-trigger" type="button" data-zoom="'+escapeHtml(src)+'" aria-label="Agrandir la planche '+String(index+1).padStart(2,'0')+' de '+escapeHtml(potion.name)+'"><img src="'+escapeHtml(src)+'" alt="Planche '+String(index+1).padStart(2,'0')+' de la potion '+escapeHtml(potion.name)+'" loading="lazy"></button><figcaption>Planche '+String(index+1).padStart(2,'0')+' · archive originale</figcaption></figure>').join('')+'</div></section>' : '';
   const variant = potion.variant ? `<aside class="potion-variant"><div><p class="eyebrow">VARIANTE</p><h3>${escapeHtml(potion.variant.name)}</h3><p>${escapeHtml(potion.variant.description)}</p></div><span aria-hidden="true">✦ ✦</span></aside>` : '';
   const incantation = potion.incantation ? `<p class="potion-incantation"><span>Incantation${potion.incantationDuration ? ` · ${escapeHtml(potion.incantationDuration)} s` : ''}</span><strong>${escapeHtml(potion.incantation)}</strong></p>` : '';
   const totalTime = potion.totalTime ? `<p class="potion-total-time">Durée totale : ${escapeHtml(potion.totalTime)}</p>` : '';
@@ -602,7 +602,10 @@ document.addEventListener('input', (event) => {
 document.addEventListener('click', (event) => {
   const image = event.target.closest('[data-zoom]');
   if (!image) return;
-  document.querySelector('#zoom-image').src = imagePath(image.dataset.zoom);
+  const zoomImage = document.querySelector('#zoom-image');
+  const thumbnail = image.matches('img') ? image : image.querySelector('img');
+  zoomImage.src = image.dataset.zoom !== '' && Number.isFinite(Number(image.dataset.zoom)) ? imagePath(image.dataset.zoom) : image.dataset.zoom;
+  zoomImage.alt = thumbnail?.alt || 'Image agrandie';
   imageDialog.showModal();
 });
 
