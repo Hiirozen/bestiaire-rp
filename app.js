@@ -225,6 +225,7 @@ function potionTemplate(potion) {
   const details = [
     ['Utilisation', potion.usage],
     ['Apparence et texture', potion.appearance],
+    ['Odeur', potion.aroma],
     ['Goût', potion.taste]
   ];
   return `<article class="potion-entry">

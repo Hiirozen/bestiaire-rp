@@ -218,7 +218,7 @@ h1 { margin: 13px 0 7px; color: #f2eedf; font: 500 clamp(36px, 4.5vw, 58px)/1.1 
 .potion-type { display: inline-flex; padding: 6px 9px; border: 1px solid rgba(217,184,120,.35); border-radius: 99px; color: var(--gold-soft); font-size: 9px; letter-spacing: .08em; text-transform: uppercase; }
 .potion-entry-mark { display: grid; width: 52px; height: 52px; place-items: center; flex: 0 0 auto; border-radius: 50%; background: rgba(217,184,120,.09); color: var(--gold); font-size: 24px; }
 .potion-summary { max-width: 850px; margin: 22px 0; color: #d0d5c8; font: 14px/1.8 var(--serif); }
-.potion-detail-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 9px; }
+.potion-detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px,1fr)); gap: 9px; }
 .potion-detail, .potion-section { padding: 15px; border: 1px solid var(--line); border-radius: 6px; background: rgba(255,255,255,.025); }
 .potion-detail h3, .potion-section h3 { margin: 0 0 9px; color: var(--gold-soft); font-size: 9px; letter-spacing: .14em; text-transform: uppercase; }
 .potion-detail p, .potion-variant p { margin: 0; color: #b8c0b2; font-size: 11px; line-height: 1.7; }
