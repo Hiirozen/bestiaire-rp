@@ -297,3 +297,4 @@ h1 { margin: 13px 0 7px; color: #f2eedf; font: 500 clamp(36px, 4.5vw, 58px)/1.1 
   .potion-variant { align-items: flex-start; padding: 13px; }
   .potion-variant > span { font-size: 12px; }
 }
+\n.potion-original-plate { width: min(100%, 320px); margin: 6px auto 0; }\n.potion-original-plate img { display: block; width: 100%; max-height: 72vh; object-fit: contain; border: 1px solid var(--line); border-radius: 5px; }\n.potion-original-plate figcaption { margin-top: 7px; color: #929b8d; font-size: 10px; text-align: center; }\n

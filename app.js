@@ -319,6 +319,7 @@ function potionTemplate(potion) {
   const conservation = potion.conservation ? `<section class="potion-note"><h3>Conservation</h3><p>${escapeHtml(potion.conservation)}</p></section>` : '';
   const particularity = potion.particularity ? `<section class="potion-note"><h3>Particularité</h3><p>${escapeHtml(potion.particularity)}</p></section>` : '';
   const testimony = potion.testimony ? `<blockquote class="potion-testimony"><p class="eyebrow">TÉMOIGNAGE</p><p>${escapeHtml(potion.testimony)}</p></blockquote>` : '';
+  const plate = potion.plate ? `<figure class="potion-original-plate"><img src="${escapeHtml(potion.plate)}" alt="Planche originale de la potion ${escapeHtml(potion.name)}" loading="lazy"><figcaption>Planche originale versée aux archives</figcaption></figure>` : '';
   const variant = potion.variant ? `<aside class="potion-variant"><div><p class="eyebrow">VARIANTE</p><h3>${escapeHtml(potion.variant.name)}</h3><p>${escapeHtml(potion.variant.description)}</p></div><span aria-hidden="true">✦ ✦</span></aside>` : '';
   const incantation = potion.incantation ? `<p class="potion-incantation"><span>Incantation${potion.incantationDuration ? ` · ${escapeHtml(potion.incantationDuration)} s` : ''}</span><strong>${escapeHtml(potion.incantation)}</strong></p>` : '';
   const totalTime = potion.totalTime ? `<p class="potion-total-time">Durée totale : ${escapeHtml(potion.totalTime)}</p>` : '';
@@ -332,7 +333,7 @@ function potionTemplate(potion) {
       <section class="potion-section"><h3>Ingrédients</h3><ul class="potion-ingredients">${potion.ingredients.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul></section>
       <section class="potion-section"><h3>Préparation</h3><ol class="potion-steps">${steps.map((step) => `<li><span>${escapeHtml(step.text)}</span>${step.duration ? `<small>${escapeHtml(step.duration)} s</small>` : ''}</li>`).join('')}</ol>${incantation}${totalTime}${finishing}</section>
     </div>
-    ${limitations}${sideEffects}${conservation}${particularity}${variant}${testimony}
+    ${limitations}${sideEffects}${conservation}${particularity}${variant}${testimony}${plate}
     <div class="potion-sheet-actions"><button class="edit-button" type="button" data-edit-potion="${escapeHtml(potion.id)}">Modifier cette fiche</button></div>
   </article>`;
 }
@@ -363,6 +364,7 @@ function potionFormFields(potion = {}) {
     ${fieldInput('Durée totale', 'totalTime', potion.totalTime, false)}${fieldInput('Instructions finales', 'finishing', potion.finishing, false)}
     ${fieldArea('Effets secondaires et précautions (un par ligne)', 'sideEffects', sideEffects)}${fieldArea('Conservation', 'conservation', potion.conservation, false)}
     ${fieldArea('Particularité', 'particularity', potion.particularity, false)}${fieldArea('Témoignage', 'testimony', potion.testimony, false)}
+    ${fieldInput('Planche d’origine (URL ou chemin du fichier)', 'plate', potion.plate, true)}
     ${fieldInput('Nom de la variante', 'variantName', potion.variant?.name, false)}${fieldArea('Description de la variante', 'variantDescription', potion.variant?.description, false)}
   </div>`;
 }
@@ -430,7 +432,7 @@ function saveContentEditor(form) {
       ingredients: parseLineList(value('ingredients')), preparation: parsePotionSteps(value('preparation')),
       incantation: value('incantation'), incantationDuration: value('incantationDuration') ? Number(value('incantationDuration')) : '',
       totalTime: value('totalTime'), finishing: value('finishing'), sideEffects: parseLineList(value('sideEffects')),
-      conservation: value('conservation'), particularity: value('particularity'), testimony: value('testimony')
+      conservation: value('conservation'), particularity: value('particularity'), testimony: value('testimony'), plate: value('plate')
     };
     if (value('variantName') || value('variantDescription')) potion.variant = { name: value('variantName'), description: value('variantDescription') };
     const newIndex = state.newPotions.findIndex((item) => item.id === id);
