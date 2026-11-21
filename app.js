@@ -216,27 +216,59 @@ function renderPotionsPage() {
   return `<section class="potion-library">
     <div class="potion-page-heading"><div><p class="eyebrow">REGISTRE DES PRÉPARATIONS</p><h1>Potions</h1><p class="intro-copy">Formules, usages et méthodes de préparation conservés dans les archives.</p></div><div class="potion-page-stamp" aria-hidden="true">⚗</div></div>
     <div class="collection-strip"><strong>${POTIONS.length}</strong><span>${POTIONS.length > 1 ? 'recettes' : 'recette'}</span><span class="strip-divider"></span><p>Notes de potions transmises à l’archive</p></div>
-    <div class="potion-list">${POTIONS.map(potionTemplate).join('')}</div>
+    <div class="potion-card-grid">${POTIONS.map(potionCardTemplate).join('')}</div>
     <footer class="page-footer"><span>Archives de Havengard</span><span>Conservé avec soin · Consulté avec prudence</span></footer>
   </section>`;
 }
 
+function potionCardTemplate(potion) {
+  return `<button class="potion-card" type="button" data-potion="${escapeHtml(potion.id)}" aria-label="Ouvrir la fiche ${escapeHtml(potion.name)}">
+    <div class="potion-card-top"><span class="potion-entry-mark" aria-hidden="true">⚗</span><span class="potion-type">${escapeHtml(potion.type)}</span></div>
+    <h2>${escapeHtml(potion.name)}</h2>
+    <p>${escapeHtml(potion.description)}</p>
+    <span class="potion-card-link">Consulter la fiche <span aria-hidden="true">↗</span></span>
+  </button>`;
+}
+
+function openPotion(potion) {
+  document.querySelector('#potion-reader-content').innerHTML = potionTemplate(potion);
+  document.querySelector('#potion-dialog').showModal();
+}
+
 function potionTemplate(potion) {
   const details = [
+    ['Origines', potion.origin],
     ['Utilisation', potion.usage],
-    ['Apparence et texture', potion.appearance],
+    ['Posologie', potion.dosage],
+    ['Apparence', potion.appearance],
+    ['Couleur', potion.color],
+    ['Texture', potion.texture],
     ['Odeur', potion.aroma],
-    ['Goût', potion.taste]
-  ];
-  return `<article class="potion-entry">
-    <header class="potion-entry-heading"><div><p class="eyebrow">FORMULE DE SOIN</p><h2>${escapeHtml(potion.name)}</h2><span class="potion-type">${escapeHtml(potion.type)}</span></div><span class="potion-entry-mark" aria-hidden="true">⚗</span></header>
-    <p class="potion-summary">${escapeHtml(potion.description)}</p>
+    ['Goût', potion.taste],
+    ['Température', potion.temperature],
+    ['Contact', potion.contact]
+  ].filter(([, value]) => Boolean(value));
+  const steps = (potion.preparation || []).map((step) => typeof step === 'string' ? { text: step } : step);
+  const functionNote = potion.function ? `<p class="potion-function"><strong>Fonction :</strong> ${escapeHtml(potion.function)}</p>` : '';
+  const limitations = potion.limitations ? `<section class="potion-note"><h3>Limites</h3><p>${escapeHtml(potion.limitations)}</p></section>` : '';
+  const sideEffects = potion.sideEffects?.length ? `<section class="potion-note potion-caution"><h3>Effets secondaires et précautions</h3><ul>${potion.sideEffects.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul></section>` : '';
+  const conservation = potion.conservation ? `<section class="potion-note"><h3>Conservation</h3><p>${escapeHtml(potion.conservation)}</p></section>` : '';
+  const particularity = potion.particularity ? `<section class="potion-note"><h3>Particularité</h3><p>${escapeHtml(potion.particularity)}</p></section>` : '';
+  const testimony = potion.testimony ? `<blockquote class="potion-testimony"><p class="eyebrow">TÉMOIGNAGE</p><p>${escapeHtml(potion.testimony)}</p></blockquote>` : '';
+  const variant = potion.variant ? `<aside class="potion-variant"><div><p class="eyebrow">VARIANTE</p><h3>${escapeHtml(potion.variant.name)}</h3><p>${escapeHtml(potion.variant.description)}</p></div><span aria-hidden="true">✦ ✦</span></aside>` : '';
+  const incantation = potion.incantation ? `<p class="potion-incantation"><span>Incantation${potion.incantationDuration ? ` · ${escapeHtml(potion.incantationDuration)} s` : ''}</span><strong>${escapeHtml(potion.incantation)}</strong></p>` : '';
+  const totalTime = potion.totalTime ? `<p class="potion-total-time">Durée totale : ${escapeHtml(potion.totalTime)}</p>` : '';
+  const finishing = potion.finishing ? `<p class="potion-finishing">${escapeHtml(potion.finishing)}</p>` : '';
+  const tags = [potion.type, potion.subcategory].filter(Boolean).map((tag) => `<span class="potion-type">${escapeHtml(tag)}</span>`).join(' ');
+  return `<article class="potion-sheet">
+    <header class="potion-entry-heading"><div><p class="eyebrow">FICHE DE POTION</p><h2>${escapeHtml(potion.name)}</h2><div class="potion-tags">${tags}</div></div><span class="potion-entry-mark" aria-hidden="true">⚗</span></header>
+    ${functionNote}<p class="eyebrow potion-section-label">DESCRIPTION</p><p class="potion-summary">${escapeHtml(potion.description)}</p>
     <div class="potion-detail-grid">${details.map(([label, value]) => `<section class="potion-detail"><h3>${escapeHtml(label)}</h3><p>${escapeHtml(value)}</p></section>`).join('')}</div>
     <div class="potion-work-grid">
       <section class="potion-section"><h3>Ingrédients</h3><ul class="potion-ingredients">${potion.ingredients.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul></section>
-      <section class="potion-section"><h3>Préparation</h3><ol class="potion-steps">${potion.preparation.map((step) => `<li>${escapeHtml(step)}</li>`).join('')}</ol><p class="potion-incantation"><span>Incantation</span><strong>${escapeHtml(potion.incantation)}</strong></p><p class="potion-finishing">${escapeHtml(potion.finishing)}</p></section>
+      <section class="potion-section"><h3>Préparation</h3><ol class="potion-steps">${steps.map((step) => `<li><span>${escapeHtml(step.text)}</span>${step.duration ? `<small>${escapeHtml(step.duration)} s</small>` : ''}</li>`).join('')}</ol>${incantation}${totalTime}${finishing}</section>
     </div>
-    <aside class="potion-variant"><div><p class="eyebrow">VARIANTE</p><h3>${escapeHtml(potion.variant.name)}</h3><p>${escapeHtml(potion.variant.description)}</p></div><span aria-hidden="true">✦ ✦</span></aside>
+    ${limitations}${sideEffects}${conservation}${particularity}${variant}${testimony}
   </article>`;
 }
 
@@ -306,8 +338,18 @@ document.addEventListener('click', (event) => {
 
 document.querySelector('.close-reader').addEventListener('click', () => reader.close());
 document.querySelector('.close-image').addEventListener('click', () => imageDialog.close());
+document.querySelector('.close-potion').addEventListener('click', () => document.querySelector('#potion-dialog').close());
 reader.addEventListener('click', (event) => { if (event.target === reader) reader.close(); });
 imageDialog.addEventListener('click', (event) => { if (event.target === imageDialog) imageDialog.close(); });
+document.querySelector('#potion-dialog').addEventListener('click', (event) => {
+  if (event.target === event.currentTarget) event.currentTarget.close();
+});
+document.querySelector('#page-content').addEventListener('click', (event) => {
+  const card = event.target.closest('[data-potion]');
+  if (!card) return;
+  const potion = POTIONS.find((item) => item.id === card.dataset.potion);
+  if (potion) openPotion(potion);
+});
 
 document.querySelector('#edit-entry').addEventListener('click', () => setEditorMode(true));
 document.querySelector('#cancel-edit').addEventListener('click', () => setEditorMode(false));

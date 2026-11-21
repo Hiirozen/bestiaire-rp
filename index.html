@@ -7,9 +7,9 @@
     <meta name="description" content="Les archives magiques de Havengard : bestiaire illustré et ressources de cours." />
     <title>Archives de Havengard — Bestiaire</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="styles.css?v=20261121-aroma1" />
-    <script src="catalog.js?v=20261121-aroma1" defer></script>
-    <script src="app.js?v=20261121-aroma1" defer></script>
+    <link rel="stylesheet" href="styles.css?v=20261121-potion2" />
+    <script src="catalog.js?v=20261121-potion2" defer></script>
+    <script src="app.js?v=20261121-potion2" defer></script>
   </head>
   <body>
     <div class="site-shell">
@@ -22,7 +22,7 @@
         <p class="side-label">Bibliothèque</p>
         <nav class="subject-nav" id="subject-nav">
           <button class="subject-link active" type="button" data-section="bestiaire"><span class="nav-icon">♧</span> Bestiaire <span class="nav-count">46</span></button>
-          <button class="subject-link" type="button" data-section="potions"><span class="nav-icon">⚗</span> Potions <span class="nav-count">1</span></button>
+          <button class="subject-link" type="button" data-section="potions"><span class="nav-icon">⚗</span> Potions <span class="nav-count">3</span></button>
           <button class="subject-link" type="button" data-section="sortileges"><span class="nav-icon">✧</span> Sortilèges</button>
           <button class="subject-link" type="button" data-section="histoire"><span class="nav-icon">◷</span> Histoire de la magie</button>
           <button class="subject-link" type="button" data-section="alchimie"><span class="nav-icon">❋</span> Alchimie botanique</button>
@@ -128,6 +128,11 @@
           <button class="edit-button" type="submit">Enregistrer</button>
         </div>
       </form>
+    </dialog>
+
+    <dialog class="reader-dialog potion-dialog" id="potion-dialog" aria-label="Fiche de potion">
+      <div class="potion-dialog-controls"><button class="icon-button close-potion" type="button" aria-label="Fermer la fiche de potion">×</button></div>
+      <div id="potion-reader-content"></div>
     </dialog>
 
     <dialog class="image-dialog" id="image-dialog" aria-label="Planche agrandie">

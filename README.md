@@ -12,7 +12,7 @@ Site statique pour parcourir les planches illustrées du dossier `Bestiaire_RP_L
 - Champs séparés : taille, poids, classification, origine, habitat et statut. Les informations viennent de `bestiaire.html` ; une valeur absente reste signalée comme non précisée.
 - Chaque notice peut être modifiée depuis sa fenêtre. Les changements sont conservés dans le navigateur ; l’export et l’import JSON servent à sauvegarder ou transférer les modifications.
 - Les changements locaux ne sont pas visibles sur le site public avant publication sur GitHub.
-- L’onglet Potions contient la Nanice de Jouvencine et sa variante Maxima, avec ingrédients et préparation détaillée.
+- L’onglet Potions propose une fiche par préparation : Nanice de Jouvencine, Humécumes et Nanis d’esprit clair.
 - Les rayons Sortilèges, Histoire de la magie et Alchimie botanique sont prêts à accueillir d’autres notes.
 
 ## Aperçu local
