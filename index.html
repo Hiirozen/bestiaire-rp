@@ -7,9 +7,9 @@
     <meta name="description" content="Les archives magiques de Havengard : bestiaire illustré et ressources de cours." />
     <title>Archives de Havengard — Bestiaire</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="styles.css?v=20261121-potion2" />
-    <script src="catalog.js?v=20261121-potion2" defer></script>
-    <script src="app.js?v=20261121-potion2" defer></script>
+    <link rel="stylesheet" href="styles.css?v=20261121-edit-all1" />
+    <script src="catalog.js?v=20261121-edit-all1" defer></script>
+    <script src="app.js?v=20261121-edit-all1" defer></script>
   </head>
   <body>
     <div class="site-shell">
@@ -74,6 +74,7 @@
 
           <div class="results-heading">
             <h2 id="results-title">Notices du bestiaire</h2>
+            <button class="add-record-button" type="button" data-add-creature>+ Ajouter une créature</button>
             <span id="results-caption">Classées d’après les planches du fonds</span>
           </div>
           <div class="creature-grid" id="creature-grid"></div>
@@ -112,6 +113,8 @@
           <label>Nom latin<input name="latin" maxlength="160" /></label>
           <label class="editor-wide">Surnom ou appellation<input name="subtitle" maxlength="180" /></label>
           <label class="editor-wide">Résumé<textarea name="summary" rows="3" maxlength="2000" required></textarea></label>
+          <label>Type<input name="kind" maxlength="100" /></label>
+          <label>Catégorie<select name="filter"><option value="terrestre">Terrestre</option><option value="aquatique">Aquatique</option><option value="aerien">Aérien</option><option value="esprit">Esprit / hybride</option><option value="artefact">Objet enchanté</option></select></label>
           <label>Taille<input name="size" maxlength="300" /></label>
           <label>Poids<input name="weight" maxlength="300" /></label>
           <label>Classification<input name="classification" maxlength="300" /></label>
@@ -133,6 +136,16 @@
     <dialog class="reader-dialog potion-dialog" id="potion-dialog" aria-label="Fiche de potion">
       <div class="potion-dialog-controls"><button class="icon-button close-potion" type="button" aria-label="Fermer la fiche de potion">×</button></div>
       <div id="potion-reader-content"></div>
+    </dialog>
+
+    <dialog class="reader-dialog content-editor-dialog" id="content-editor-dialog" aria-label="Modifier une fiche">
+      <div class="reader-topline"><div><p class="eyebrow" id="content-editor-eyebrow">ÉDITION LOCALE</p><h2 id="content-editor-title">Modifier une fiche</h2></div><button class="icon-button close-content-editor" type="button" aria-label="Fermer l’éditeur">×</button></div>
+      <form id="content-editor-form">
+        <div class="generic-editor-fields" id="content-editor-fields"></div>
+        <p class="editor-storage-note">La fiche est sauvegardée dans ce navigateur. Exporte régulièrement une sauvegarde pour la conserver ou la publier.</p>
+        <p class="editor-status" id="content-editor-status" role="status" aria-live="polite"></p>
+        <div class="editor-actions"><button class="quiet-button" id="cancel-content-edit" type="button">Annuler</button><label class="quiet-button import-button">Importer une sauvegarde<input id="import-library" type="file" accept="application/json,.json" /></label><button class="quiet-button" id="export-library" type="button">Exporter toutes les fiches</button><button class="edit-button" type="submit">Enregistrer</button></div>
+      </form>
     </dialog>
 
     <dialog class="image-dialog" id="image-dialog" aria-label="Planche agrandie">

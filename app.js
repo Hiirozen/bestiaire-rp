@@ -12,10 +12,12 @@ const filters = document.querySelector('#filters');
 const reader = document.querySelector('#reader-dialog');
 const imageDialog = document.querySelector('#image-dialog');
 const editStorageKey = 'havengard-creature-edits-v1';
+const libraryStorageKey = 'havengard-library-edits-v1';
 let activeFilter = 'all';
 let activeSection = 'bestiaire';
 let searchTerm = '';
 let currentCreature = null;
+let contentEditContext = null;
 
 const imagePath = (number) => `public/images/image-${number}.jpg`;
 
@@ -35,6 +37,18 @@ function cardTemplate(creature) {
   </article>`;
 }
 
+function updateNavCount(section, count) {
+  const button = document.querySelector(`.subject-link[data-section="${section}"]`);
+  if (!button) return;
+  let badge = button.querySelector('.nav-count');
+  if (!badge) {
+    badge = document.createElement('span');
+    badge.className = 'nav-count';
+    button.append(badge);
+  }
+  badge.textContent = String(count);
+}
+
 function renderGrid() {
   const results = CREATURES.filter((creature) => {
     const matchesFilter = activeFilter === 'all' || creature.filter === activeFilter;
@@ -48,6 +62,7 @@ function renderGrid() {
   grid.innerHTML = results.map(cardTemplate).join('');
   entryCount.textContent = String(results.length);
   emptyResults.hidden = results.length > 0;
+  updateNavCount('bestiaire', CREATURES.length);
 }
 
 function renderFactGrid(creature) {
@@ -96,7 +111,43 @@ function saveEdits(edits) {
   localStorage.setItem(editStorageKey, JSON.stringify(edits));
 }
 
+function loadLibraryState() {
+  const empty = { potionEdits: {}, newPotions: [], customCreatures: [], notes: { sortileges: [], histoire: [], alchimie: [] } };
+  try {
+    const saved = JSON.parse(localStorage.getItem(libraryStorageKey) || '{}');
+    return {
+      ...empty,
+      ...saved,
+      potionEdits: saved.potionEdits || {},
+      newPotions: Array.isArray(saved.newPotions) ? saved.newPotions : [],
+      customCreatures: Array.isArray(saved.customCreatures) ? saved.customCreatures : [],
+      notes: { ...empty.notes, ...(saved.notes || {}) }
+    };
+  } catch {
+    return empty;
+  }
+}
+
+function saveLibraryState(state) {
+  localStorage.setItem(libraryStorageKey, JSON.stringify(state));
+}
+
+function getPotions() {
+  const state = loadLibraryState();
+  const edited = POTIONS.map((potion) => ({ ...potion, ...(state.potionEdits[potion.id] || {}) }));
+  return [...edited, ...state.newPotions];
+}
+
+function getSubjectNotes(section) {
+  const state = loadLibraryState();
+  return Array.isArray(state.notes[section]) ? state.notes[section] : [];
+}
+
 function applySavedEdits() {
+  const library = loadLibraryState();
+  library.customCreatures.forEach((creature) => {
+    if (!CREATURES.some((existing) => existing.id === creature.id)) CREATURES.push(creature);
+  });
   const edits = loadSavedEdits();
   CREATURES.forEach((creature) => {
     const edit = edits[creature.id];
@@ -104,6 +155,8 @@ function applySavedEdits() {
     ['title', 'latin', 'subtitle', 'summary'].forEach((key) => {
       if (typeof edit[key] === 'string') creature[key] = edit[key];
     });
+    if (typeof edit.kind === 'string') creature.kind = edit.kind;
+    if (typeof edit.filter === 'string') creature.filter = edit.filter;
     if (typeof edit.summary !== 'string' && typeof edit.description === 'string') creature.summary = edit.description;
     if (edit.facts && typeof edit.facts === 'object') {
       creature.facts = { ...(creature.facts || {}), ...edit.facts };
@@ -125,6 +178,8 @@ function populateEditor(creature) {
     form.elements.namedItem(key).value = creature[key] || '';
   });
   form.elements.namedItem('summary').value = creature.summary || creature.description || '';
+  form.elements.namedItem('kind').value = creature.kind || '';
+  form.elements.namedItem('filter').value = creature.filter || 'terrestre';
   Object.keys(factAliases).forEach((key) => {
     form.elements.namedItem(key).value = editorFactValue(creature, key);
   });
@@ -142,36 +197,41 @@ function setEditorMode(editing) {
 }
 
 function exportSavedEdits() {
-  const edits = loadSavedEdits();
-  const payload = JSON.stringify({ format: 'havengard-edits-v1', edits }, null, 2);
+  const payload = JSON.stringify({ format: 'havengard-library-v2', creatureEdits: loadSavedEdits(), library: loadLibraryState() }, null, 2);
   const url = URL.createObjectURL(new Blob([payload], { type: 'application/json' }));
   const link = document.createElement('a');
   link.href = url;
-  link.download = 'havengard-modifications.json';
+  link.download = 'havengard-sauvegarde.json';
   link.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-function importSavedEdits(file) {
-  const status = document.querySelector('#editor-status');
+function importSavedEdits(file, status = document.querySelector('#editor-status')) {
   file.text().then((contents) => {
     const payload = JSON.parse(contents);
-    if (payload.format !== 'havengard-edits-v1' || !payload.edits || typeof payload.edits !== 'object') {
+    if (payload.format === 'havengard-library-v2') {
+      saveEdits(payload.creatureEdits && typeof payload.creatureEdits === 'object' ? payload.creatureEdits : {});
+      saveLibraryState(payload.library && typeof payload.library === 'object' ? payload.library : loadLibraryState());
+    } else if (payload.format === 'havengard-edits-v1' && payload.edits && typeof payload.edits === 'object') {
+      const knownIds = new Set(CREATURES.map((creature) => creature.id));
+      const imported = Object.fromEntries(Object.entries(payload.edits).filter(([id, edit]) => knownIds.has(id) && edit && typeof edit === 'object'));
+      saveEdits({ ...loadSavedEdits(), ...imported });
+    } else {
       throw new Error('Format de sauvegarde invalide.');
     }
-    const knownIds = new Set(CREATURES.map((creature) => creature.id));
-    const imported = Object.fromEntries(Object.entries(payload.edits).filter(([id, edit]) => knownIds.has(id) && edit && typeof edit === 'object'));
-    saveEdits({ ...loadSavedEdits(), ...imported });
     applySavedEdits();
-    renderGrid();
+    if (activeSection === 'bestiaire') renderGrid();
+    else showSubject(activeSection);
     if (currentCreature) {
       currentCreature = CREATURES.find((creature) => creature.id === currentCreature.id);
-      populateEditor(currentCreature);
-      renderReader(currentCreature);
+      if (currentCreature) {
+        populateEditor(currentCreature);
+        renderReader(currentCreature);
+      }
     }
-    status.textContent = 'Sauvegarde importée et enregistrée dans ce navigateur.';
+    if (status) status.textContent = 'Sauvegarde importée et enregistrée dans ce navigateur.';
   }).catch(() => {
-    status.textContent = 'Impossible de lire ce fichier. Choisis une sauvegarde Havengard au format JSON.';
+    if (status) status.textContent = 'Impossible de lire ce fichier. Choisis une sauvegarde Havengard au format JSON.';
   });
 }
 
@@ -213,10 +273,13 @@ function openReader(creature) {
 }
 
 function renderPotionsPage() {
+  const potions = getPotions();
+  updateNavCount('potions', potions.length);
   return `<section class="potion-library">
     <div class="potion-page-heading"><div><p class="eyebrow">REGISTRE DES PRÉPARATIONS</p><h1>Potions</h1><p class="intro-copy">Formules, usages et méthodes de préparation conservés dans les archives.</p></div><div class="potion-page-stamp" aria-hidden="true">⚗</div></div>
-    <div class="collection-strip"><strong>${POTIONS.length}</strong><span>${POTIONS.length > 1 ? 'recettes' : 'recette'}</span><span class="strip-divider"></span><p>Notes de potions transmises à l’archive</p></div>
-    <div class="potion-card-grid">${POTIONS.map(potionCardTemplate).join('')}</div>
+    <div class="collection-strip"><strong>${potions.length}</strong><span>${potions.length > 1 ? 'recettes' : 'recette'}</span><span class="strip-divider"></span><p>Notes de potions transmises à l’archive</p></div>
+    <button class="add-record-button" type="button" data-add-potion>+ Ajouter une potion</button>
+    <div class="potion-card-grid">${potions.map(potionCardTemplate).join('')}</div>
     <footer class="page-footer"><span>Archives de Havengard</span><span>Conservé avec soin · Consulté avec prudence</span></footer>
   </section>`;
 }
@@ -231,7 +294,8 @@ function potionCardTemplate(potion) {
 }
 
 function openPotion(potion) {
-  document.querySelector('#potion-reader-content').innerHTML = potionTemplate(potion);
+  const current = getPotions().find((item) => item.id === potion.id) || potion;
+  document.querySelector('#potion-reader-content').innerHTML = potionTemplate(current);
   document.querySelector('#potion-dialog').showModal();
 }
 
@@ -269,7 +333,151 @@ function potionTemplate(potion) {
       <section class="potion-section"><h3>Préparation</h3><ol class="potion-steps">${steps.map((step) => `<li><span>${escapeHtml(step.text)}</span>${step.duration ? `<small>${escapeHtml(step.duration)} s</small>` : ''}</li>`).join('')}</ol>${incantation}${totalTime}${finishing}</section>
     </div>
     ${limitations}${sideEffects}${conservation}${particularity}${variant}${testimony}
+    <div class="potion-sheet-actions"><button class="edit-button" type="button" data-edit-potion="${escapeHtml(potion.id)}">Modifier cette fiche</button></div>
   </article>`;
+}
+
+function fieldInput(label, name, value = '', wide = false) {
+  return `<label class="${wide ? 'editor-wide' : ''}">${escapeHtml(label)}<input name="${escapeHtml(name)}" value="${escapeHtml(value || '')}" maxlength="300" /></label>`;
+}
+
+function fieldArea(label, name, value = '', wide = true, rows = 3) {
+  return `<label class="${wide ? 'editor-wide' : ''}">${escapeHtml(label)}<textarea name="${escapeHtml(name)}" rows="${rows}" maxlength="6000">${escapeHtml(value || '')}</textarea></label>`;
+}
+
+function potionFormFields(potion = {}) {
+  const ingredients = (potion.ingredients || []).join('\n');
+  const preparation = (potion.preparation || []).map((step) => typeof step === 'string' ? step : `${step.text}${step.duration ? ` | ${step.duration}` : ''}`).join('\n');
+  const sideEffects = (potion.sideEffects || []).join('\n');
+  return `<div class="editor-grid">
+    ${fieldInput('Nom de la potion', 'name', potion.name)}${fieldInput('Type', 'type', potion.type)}
+    ${fieldInput('Sous-catégorie', 'subcategory', potion.subcategory)}${fieldInput('Fonction', 'function', potion.function)}
+    ${fieldArea('Description', 'description', potion.description)}${fieldInput('Origines', 'origin', potion.origin)}
+    ${fieldArea('Utilisation', 'usage', potion.usage, false)}${fieldInput('Posologie', 'dosage', potion.dosage, false)}
+    ${fieldArea('Apparence', 'appearance', potion.appearance, false)}${fieldInput('Couleur', 'color', potion.color, false)}
+    ${fieldInput('Texture', 'texture', potion.texture, false)}${fieldInput('Odeur', 'aroma', potion.aroma, false)}
+    ${fieldInput('Goût', 'taste', potion.taste, false)}${fieldInput('Température', 'temperature', potion.temperature, false)}
+    ${fieldInput('Contact', 'contact', potion.contact, false)}${fieldArea('Limites', 'limitations', potion.limitations)}
+    ${fieldArea('Ingrédients (un par ligne)', 'ingredients', ingredients, false, 5)}${fieldArea('Préparation (une étape par ligne ; durée facultative : étape | secondes)', 'preparation', preparation, false, 8)}
+    ${fieldInput('Incantation', 'incantation', potion.incantation, false)}${fieldInput('Durée de l’incantation (secondes)', 'incantationDuration', potion.incantationDuration, false)}
+    ${fieldInput('Durée totale', 'totalTime', potion.totalTime, false)}${fieldInput('Instructions finales', 'finishing', potion.finishing, false)}
+    ${fieldArea('Effets secondaires et précautions (un par ligne)', 'sideEffects', sideEffects)}${fieldArea('Conservation', 'conservation', potion.conservation, false)}
+    ${fieldArea('Particularité', 'particularity', potion.particularity, false)}${fieldArea('Témoignage', 'testimony', potion.testimony, false)}
+    ${fieldInput('Nom de la variante', 'variantName', potion.variant?.name, false)}${fieldArea('Description de la variante', 'variantDescription', potion.variant?.description, false)}
+  </div>`;
+}
+
+function openPotionEditor(potion = null) {
+  contentEditContext = { kind: 'potion', id: potion?.id || null, isNew: !potion };
+  document.querySelector('#content-editor-eyebrow').textContent = 'ÉDITION LOCALE · POTIONS';
+  document.querySelector('#content-editor-title').textContent = potion ? `Modifier : ${potion.name}` : 'Ajouter une potion';
+  document.querySelector('#content-editor-fields').innerHTML = potionFormFields(potion || {});
+  document.querySelector('#content-editor-status').textContent = '';
+  document.querySelector('#content-editor-dialog').showModal();
+}
+
+function parseLineList(value) {
+  return String(value || '').split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+}
+
+function parsePotionSteps(value) {
+  return parseLineList(value).map((line) => {
+    const match = line.match(/^(.*?)\s*\|\s*(\d+)\s*(?:s|sec(?:ondes)?)?$/i);
+    return match ? { text: match[1].trim(), duration: Number(match[2]) } : line;
+  });
+}
+
+function noteCardTemplate(section, note) {
+  const details = (note.details || []).map((item) => `<div><dt>${escapeHtml(item.label)}</dt><dd>${escapeHtml(item.value)}</dd></div>`).join('');
+  return `<article class="subject-note-card"><p class="eyebrow">${escapeHtml(note.type || subjectNames[section])}</p><h2>${escapeHtml(note.title)}</h2>${note.summary ? `<p class="subject-note-summary">${escapeHtml(note.summary)}</p>` : ''}${note.content ? `<details class="subject-note-content"><summary>Lire la fiche</summary><div>${escapeHtml(note.content).replace(/\n/g, '<br>')}</div></details>` : ''}${details ? `<dl class="subject-note-details">${details}</dl>` : ''}<button class="quiet-button" type="button" data-edit-note="${escapeHtml(note.id)}" data-category="${escapeHtml(section)}">Modifier cette fiche</button></article>`;
+}
+
+function renderNotesPage(section) {
+  const notes = getSubjectNotes(section);
+  updateNavCount(section, notes.length);
+  const labels = { sortileges: 'Sortilèges', histoire: 'Histoire de la magie', alchimie: 'Alchimie botanique' };
+  return `<section class="subject-library"><div class="potion-page-heading"><div><p class="eyebrow">REGISTRE DES CONNAISSANCES</p><h1>${escapeHtml(labels[section] || subjectNames[section])}</h1><p class="intro-copy">Chaque note possède sa propre fiche, modifiable à tout moment.</p></div><div class="potion-page-stamp" aria-hidden="true">${section === 'sortileges' ? '✧' : section === 'histoire' ? '◷' : '❋'}</div></div><div class="collection-strip"><strong>${notes.length}</strong><span>${notes.length === 1 ? 'fiche' : 'fiches'}</span><span class="strip-divider"></span><p>Enregistrées dans ce navigateur</p></div><button class="add-record-button" type="button" data-add-note="${escapeHtml(section)}">+ Ajouter une fiche</button>${notes.length ? `<div class="subject-note-grid">${notes.map((note) => noteCardTemplate(section, note)).join('')}</div>` : `<div class="empty-subject-card"><span class="empty-glyph">${section === 'sortileges' ? '✧' : section === 'histoire' ? '◷' : '❋'}</span><h2>Aucune fiche pour le moment</h2><p>Ajoute une note ; tu pourras la modifier ou la compléter ensuite.</p></div>`}<footer class="page-footer"><span>Archives de Havengard</span><span>Conservé avec soin · Consulté avec prudence</span></footer></section>`;
+}
+
+function openNoteEditor(section, note = null) {
+  contentEditContext = { kind: 'note', section, id: note?.id || null, isNew: !note };
+  document.querySelector('#content-editor-eyebrow').textContent = `ÉDITION LOCALE · ${subjectNames[section]}`;
+  document.querySelector('#content-editor-title').textContent = note ? `Modifier : ${note.title}` : 'Ajouter une fiche';
+  const details = (note?.details || []).map((item) => `${item.label}: ${item.value}`).join('\n');
+  document.querySelector('#content-editor-fields').innerHTML = `<div class="editor-grid">${fieldInput('Titre', 'title', note?.title)}${fieldInput('Type ou sous-catégorie', 'type', note?.type)}${fieldArea('Résumé', 'summary', note?.summary)}${fieldArea('Contenu détaillé', 'content', note?.content, true, 8)}${fieldArea('Informations complémentaires (une par ligne, format : Nom : valeur)', 'details', details, true, 5)}</div>`;
+  document.querySelector('#content-editor-status').textContent = '';
+  document.querySelector('#content-editor-dialog').showModal();
+}
+
+function saveContentEditor(form) {
+  const context = contentEditContext;
+  if (!context) return;
+  const data = new FormData(form);
+  const value = (key) => String(data.get(key) || '').trim();
+  const state = loadLibraryState();
+  if (context.kind === 'potion') {
+    const name = value('name');
+    if (!name) {
+      document.querySelector('#content-editor-status').textContent = 'Ajoute un nom à cette potion.';
+      return;
+    }
+    const id = context.id || `custom-potion-${Date.now()}`;
+    const potion = {
+      id, name, type: value('type'), subcategory: value('subcategory'), function: value('function'),
+      description: value('description'), origin: value('origin'), usage: value('usage'), dosage: value('dosage'),
+      limitations: value('limitations'), appearance: value('appearance'), color: value('color'), texture: value('texture'),
+      aroma: value('aroma'), taste: value('taste'), temperature: value('temperature'), contact: value('contact'),
+      ingredients: parseLineList(value('ingredients')), preparation: parsePotionSteps(value('preparation')),
+      incantation: value('incantation'), incantationDuration: value('incantationDuration') ? Number(value('incantationDuration')) : '',
+      totalTime: value('totalTime'), finishing: value('finishing'), sideEffects: parseLineList(value('sideEffects')),
+      conservation: value('conservation'), particularity: value('particularity'), testimony: value('testimony')
+    };
+    if (value('variantName') || value('variantDescription')) potion.variant = { name: value('variantName'), description: value('variantDescription') };
+    const newIndex = state.newPotions.findIndex((item) => item.id === id);
+    if (newIndex >= 0) state.newPotions[newIndex] = potion;
+    else if (context.isNew) state.newPotions.push(potion);
+    else state.potionEdits[id] = potion;
+    saveLibraryState(state);
+    document.querySelector('#content-editor-dialog').close();
+    const potionDialog = document.querySelector('#potion-dialog');
+    if (potionDialog.open) potionDialog.close();
+    showSubject('potions');
+    contentEditContext = null;
+    return;
+  }
+
+  const title = value('title');
+  if (!title) {
+    document.querySelector('#content-editor-status').textContent = 'Ajoute un titre à cette fiche.';
+    return;
+  }
+  const details = parseLineList(value('details')).map((line) => {
+    const separator = line.indexOf(':');
+    return separator > 0 ? { label: line.slice(0, separator).trim(), value: line.slice(separator + 1).trim() } : { label: 'Note', value: line };
+  });
+  const rows = state.notes[context.section] || [];
+  const id = context.id || `note-${context.section}-${Date.now()}`;
+  const note = { id, title, type: value('type'), summary: value('summary'), content: value('content'), details };
+  const noteIndex = rows.findIndex((item) => item.id === id);
+  if (noteIndex < 0) rows.push(note);
+  else rows[noteIndex] = note;
+  state.notes[context.section] = rows;
+  saveLibraryState(state);
+  document.querySelector('#content-editor-dialog').close();
+  showSubject(context.section);
+  contentEditContext = null;
+}
+
+function startNewCreature() {
+  const creature = {
+    id: `custom-creature-${Date.now()}`, title: '', sourceTitle: '', latin: '', subtitle: '',
+    kind: 'Créature magique', filter: 'terrestre', files: [], description: '', summary: '', facts: {}, keywords: ''
+  };
+  CREATURES.push(creature);
+  currentCreature = creature;
+  renderGrid();
+  openReader(creature);
+  setEditorMode(true);
 }
 
 function showSubject(section) {
@@ -289,7 +497,7 @@ function showSubject(section) {
   } else if (section === 'potions') {
     document.querySelector('#page-content').innerHTML = renderPotionsPage();
   } else {
-    document.querySelector('#page-content').innerHTML = `<div class="empty-subject"><div class="empty-subject-card"><span class="empty-glyph">${section === 'potions' ? '⚗' : section === 'sortileges' ? '✧' : section === 'histoire' ? '◷' : '❋'}</span><p class="eyebrow" style="justify-content:center">RAYON DE LA BIBLIOTHÈQUE</p><h1>${escapeHtml(subjectNames[section])}</h1><p>Ce rayon est prêt à accueillir ses notes. Le dossier fourni contient uniquement les planches du bestiaire ; aucun document de cette matière n’y figure encore.</p><small>Source actuelle : 50 planches illustrées · Bestiaire RP Light</small></div></div><footer class="page-footer"><span>Archives de Havengard</span><span>Conservé avec soin · Consulté avec prudence</span></footer>`;
+    document.querySelector('#page-content').innerHTML = renderNotesPage(section);
   }
 }
 
@@ -344,20 +552,65 @@ imageDialog.addEventListener('click', (event) => { if (event.target === imageDia
 document.querySelector('#potion-dialog').addEventListener('click', (event) => {
   if (event.target === event.currentTarget) event.currentTarget.close();
 });
+document.querySelector('#potion-dialog').addEventListener('click', (event) => {
+  const button = event.target.closest('[data-edit-potion]');
+  if (!button) return;
+  const potion = getPotions().find((item) => item.id === button.dataset.editPotion);
+  if (potion) openPotionEditor(potion);
+});
 document.querySelector('#page-content').addEventListener('click', (event) => {
+  if (event.target.closest('[data-add-creature]')) {
+    startNewCreature();
+    return;
+  }
+  if (event.target.closest('[data-add-potion]')) {
+    openPotionEditor();
+    return;
+  }
+  const addNote = event.target.closest('[data-add-note]');
+  if (addNote) {
+    openNoteEditor(addNote.dataset.addNote);
+    return;
+  }
+  const editNote = event.target.closest('[data-edit-note]');
+  if (editNote) {
+    const section = editNote.dataset.category;
+    const note = getSubjectNotes(section).find((item) => item.id === editNote.dataset.editNote);
+    if (note) openNoteEditor(section, note);
+    return;
+  }
   const card = event.target.closest('[data-potion]');
   if (!card) return;
-  const potion = POTIONS.find((item) => item.id === card.dataset.potion);
+  const potion = getPotions().find((item) => item.id === card.dataset.potion);
   if (potion) openPotion(potion);
 });
 
 document.querySelector('#edit-entry').addEventListener('click', () => setEditorMode(true));
-document.querySelector('#cancel-edit').addEventListener('click', () => setEditorMode(false));
+document.querySelector('#cancel-edit').addEventListener('click', () => {
+  const alreadySaved = currentCreature && loadLibraryState().customCreatures.some((creature) => creature.id === currentCreature.id);
+  if (currentCreature?.id.startsWith('custom-creature-') && !alreadySaved && !loadSavedEdits()[currentCreature.id]) {
+    CREATURES.splice(CREATURES.indexOf(currentCreature), 1);
+    renderGrid();
+  }
+  setEditorMode(false);
+});
 document.querySelector('#export-edits').addEventListener('click', exportSavedEdits);
 document.querySelector('#import-edits').addEventListener('change', (event) => {
   const file = event.target.files?.[0];
   if (file) importSavedEdits(file);
   event.target.value = '';
+});
+document.querySelector('.close-content-editor').addEventListener('click', () => document.querySelector('#content-editor-dialog').close());
+document.querySelector('#cancel-content-edit').addEventListener('click', () => document.querySelector('#content-editor-dialog').close());
+document.querySelector('#export-library').addEventListener('click', exportSavedEdits);
+document.querySelector('#import-library').addEventListener('change', (event) => {
+  const file = event.target.files?.[0];
+  if (file) importSavedEdits(file, document.querySelector('#content-editor-status'));
+  event.target.value = '';
+});
+document.querySelector('#content-editor-form').addEventListener('submit', (event) => {
+  event.preventDefault();
+  saveContentEditor(event.currentTarget);
 });
 document.querySelector('#reader-editor').addEventListener('submit', (event) => {
   event.preventDefault();
@@ -369,12 +622,22 @@ document.querySelector('#reader-editor').addEventListener('submit', (event) => {
     latin: String(data.get('latin') || '').trim(),
     subtitle: String(data.get('subtitle') || '').trim(),
     summary: String(data.get('summary') || '').trim(),
+    kind: String(data.get('kind') || '').trim(),
+    filter: String(data.get('filter') || 'terrestre'),
     facts
   };
   const edits = loadSavedEdits();
   edits[currentCreature.id] = edit;
   try {
     saveEdits(edits);
+    if (currentCreature.id.startsWith('custom-creature-')) {
+      const library = loadLibraryState();
+      const updated = { ...currentCreature, ...edit, facts: { ...(currentCreature.facts || {}), ...facts } };
+      const index = library.customCreatures.findIndex((creature) => creature.id === currentCreature.id);
+      if (index < 0) library.customCreatures.push(updated);
+      else library.customCreatures[index] = updated;
+      saveLibraryState(library);
+    }
   } catch {
     document.querySelector('#editor-status').textContent = 'La sauvegarde locale est indisponible dans ce navigateur.';
     return;

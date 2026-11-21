@@ -239,6 +239,32 @@ h1 { margin: 13px 0 7px; color: #f2eedf; font: 500 clamp(36px, 4.5vw, 58px)/1.1 
 .potion-testimony { margin: 0; padding: 14px 16px; border-left: 2px solid var(--gold); background: rgba(217,184,120,.055); }
 .potion-testimony .eyebrow { margin: 0 0 7px; color: var(--gold-soft); }
 .potion-testimony p:last-child { margin: 0; color: #c6caba; font: italic 13px/1.7 var(--serif); }
+.add-record-button { display: inline-flex; align-items: center; justify-content: center; min-height: 34px; margin: 4px 0 14px; padding: 8px 12px; border: 1px solid rgba(217,184,120,.4); border-radius: 5px; background: rgba(217,184,120,.07); color: var(--gold-soft); font: inherit; font-size: 10px; cursor: pointer; }
+.add-record-button:hover, .add-record-button:focus-visible { border-color: var(--gold); background: rgba(217,184,120,.14); outline: none; }
+.results-heading { flex-wrap: wrap; }
+.results-heading .add-record-button { margin: 0 auto 0 16px; }
+.subject-library { min-height: 70vh; }
+.subject-note-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px,1fr)); gap: 13px; margin-top: 6px; }
+.subject-note-card { padding: 19px; border: 1px solid var(--line); border-radius: 8px; background: linear-gradient(145deg, rgba(229,191,119,.06), rgba(255,255,255,.015) 48%), var(--panel); }
+.subject-note-card h2 { margin: 7px 0 10px; color: var(--ink); font: 500 24px var(--serif); }
+.subject-note-summary { color: #c5ccbe; font-size: 11px; line-height: 1.7; }
+.subject-note-content { margin: 12px 0; padding: 11px; border: 1px solid var(--line); border-radius: 5px; color: #c0c8ba; font-size: 11px; line-height: 1.7; }
+.subject-note-content summary { color: var(--gold-soft); cursor: pointer; }
+.subject-note-content > div { padding-top: 9px; }
+.subject-note-details { display: grid; gap: 7px; margin: 12px 0; }
+.subject-note-details > div { display: grid; grid-template-columns: minmax(90px,.4fr) 1fr; gap: 10px; color: #bdc6b7; font-size: 10px; line-height: 1.5; }
+.subject-note-details dt { color: var(--gold-soft); font-weight: 700; }
+.subject-note-details dd { margin: 0; }
+.subject-note-card .quiet-button { margin-top: 10px; }
+.content-editor-dialog { width: min(950px, calc(100vw - 34px)); max-height: min(92vh, 1050px); overflow-y: auto; }
+.generic-editor-fields { margin-top: 15px; }
+.potion-sheet-actions { display: flex; justify-content: flex-end; margin-top: 4px; }
+.potion-card-grid + .page-footer { margin-top: 24px; }
+@media (max-width: 620px) {
+  .results-heading .add-record-button { order: 3; margin: 5px 0 0; }
+  .subject-note-grid { grid-template-columns: 1fr; }
+  .subject-note-details > div { grid-template-columns: 1fr; gap: 3px; }
+}
 .potion-entry { padding: clamp(18px, 3vw, 30px); border: 1px solid var(--line); border-radius: 9px; background: linear-gradient(145deg, rgba(229,191,119,.07), rgba(255,255,255,.018) 42%), var(--panel); box-shadow: 0 20px 50px #0003; }
 .potion-entry-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
 .potion-entry-heading h2 { margin: 6px 0 9px; color: var(--ink); font: 500 clamp(25px, 4vw, 38px) var(--serif); }
