@@ -7,9 +7,9 @@
     <meta name="description" content="Les archives magiques de Havengard : bestiaire illustré et ressources de cours." />
     <title>Archives de Havengard — Bestiaire</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="styles.css?v=20261121-classification-1x8x1" />
-    <script src="catalog.js?v=20261121-classification-1x8x1" defer></script>
-    <script src="app.js?v=20261121-classification-1x8x1" defer></script>
+    <link rel="stylesheet" href="styles.css?v=20261121-status-enum1" />
+    <script src="catalog.js?v=20261121-status-enum1" defer></script>
+    <script src="app.js?v=20261121-status-enum1" defer></script>
   </head>
   <body>
     <div class="site-shell">
@@ -120,7 +120,7 @@
           <label>Classification<select name="classification"><option value="">Non renseignée</option><option value="1x">1x</option><option value="2x">2x</option><option value="3x">3x</option><option value="4x">4x</option><option value="5x">5x</option><option value="6x">6x</option><option value="7x">7x</option><option value="8x">8x</option></select></label>
           <label>Origine<input name="origin" maxlength="300" /></label>
           <label>Habitat<input name="habitat" maxlength="300" /></label>
-          <label>Statut<input name="status" maxlength="300" /></label>
+          <label>Statut<select name="status"><option value="">Non renseigné</option><option value="animal">animal</option><option value="esprits">esprits</option><option value="être">être</option><option value="non être">non être</option></select></label>
         </div>
         <p class="editor-storage-note">Enregistré dans ce navigateur. Pour partager les changements sur le site public, exporte la sauvegarde et transmets-la.</p>
         <p class="editor-status" id="editor-status" role="status" aria-live="polite"></p>
