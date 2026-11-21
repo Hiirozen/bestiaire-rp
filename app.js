@@ -88,14 +88,20 @@ function readFact(creature, key) {
   for (const alias of factAliases[key] || [key]) {
     if (!Object.prototype.hasOwnProperty.call(facts, alias)) continue;
     const value = String(facts[alias] ?? '').trim();
+    if (key === 'classification') return /^[1-8]x$/i.test(value) ? value.toLowerCase() : 'Non renseignée';
     return value || 'Non précisé sur la planche';
   }
-  return 'Non précisé sur la planche';
+  return key === 'classification' ? 'Non renseignée' : 'Non précisé sur la planche';
 }
 
 function editorFactValue(creature, key) {
   const value = readFact(creature, key);
+  if (key === 'classification') return /^[1-8]x$/i.test(value) ? value.toLowerCase() : '';
   return /^non\s+(précis|spécifi|renseign)/iu.test(value) ? '' : value;
+}
+
+function cleanClassificationMention(text) {
+  return String(text || '').replace(/\s*classification\s*:\s*[^.\n]*(?:\.)?/giu, ' ').replace(/[ \t]{2,}/g, ' ').trim();
 }
 
 function loadSavedEdits() {
@@ -155,16 +161,22 @@ function applySavedEdits() {
   library.customCreatures.forEach((creature) => {
     if (!CREATURES.some((existing) => existing.id === creature.id)) CREATURES.push(creature);
   });
+  CREATURES.forEach((creature) => {
+    if (creature.facts) delete creature.facts.classification;
+    if (creature.publishedFacts) delete creature.publishedFacts.classification;
+    if (typeof creature.summary === 'string') creature.summary = cleanClassificationMention(creature.summary);
+    if (typeof creature.description === 'string') creature.description = cleanClassificationMention(creature.description);
+  });
   const edits = loadSavedEdits();
   CREATURES.forEach((creature) => {
     const edit = edits[creature.id];
     if (!edit || typeof edit !== 'object') return;
     ['title', 'latin', 'subtitle', 'summary'].forEach((key) => {
-      if (typeof edit[key] === 'string') creature[key] = edit[key];
+      if (typeof edit[key] === 'string') creature[key] = key === 'summary' ? cleanClassificationMention(edit[key]) : edit[key];
     });
     if (typeof edit.kind === 'string') creature.kind = edit.kind;
     if (typeof edit.filter === 'string') creature.filter = edit.filter;
-    if (typeof edit.summary !== 'string' && typeof edit.description === 'string') creature.summary = edit.description;
+    if (typeof edit.summary !== 'string' && typeof edit.description === 'string') creature.summary = cleanClassificationMention(edit.description);
     if (edit.facts && typeof edit.facts === 'object') {
       creature.facts = { ...(creature.facts || {}), ...edit.facts };
       if (creature.publishedFacts) {
@@ -250,7 +262,7 @@ function renderOriginalNotes(creature) {
   const noteHtml = escapeHtml(note.replace(/\\n/g, '\n'))
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\n/g, '<br>');
-  const factsHtml = Object.entries(facts).map(([key, value]) => `<div><dt>${labels[key] || escapeHtml(key)}</dt><dd>${escapeHtml(value)}</dd></div>`).join('');
+  const factsHtml = Object.entries(facts).filter(([key]) => key !== 'classification').map(([key, value]) => `<div><dt>${labels[key] || escapeHtml(key)}</dt><dd>${escapeHtml(value)}</dd></div>`).join('');
   const provenance = [];
   if (creature.publishedLatin && creature.publishedLatin !== creature.latin) provenance.push(`Nom latin conservé : ${creature.publishedLatin}`);
   if (creature.publishedSubtitle && creature.publishedSubtitle !== creature.subtitle) provenance.push(`Appellation conservée : ${creature.publishedSubtitle}`);
