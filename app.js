@@ -83,12 +83,19 @@ const publishedFactAliases = {
   origin: 'origine', habitat: 'habitat', status: 'statut'
 };
 
+function normalizeClassification(value) {
+  const normalized = String(value || '').trim().toLowerCase().replace(/\s*[-–]\s*/g, '–').replace(/\s+/g, '');
+  const match = normalized.match(/^([1-8])x(?:–([1-8])x)?$/);
+  if (!match || (match[2] && Number(match[1]) > Number(match[2]))) return '';
+  return normalized;
+}
+
 function readFact(creature, key) {
   const facts = creature.facts || {};
   for (const alias of factAliases[key] || [key]) {
     if (!Object.prototype.hasOwnProperty.call(facts, alias)) continue;
     const value = String(facts[alias] ?? '').trim();
-    if (key === 'classification') return /^[1-8]x$/i.test(value) ? value.toLowerCase() : 'Non renseignée';
+    if (key === 'classification') return normalizeClassification(value) || 'Non renseignée';
     if (key === 'status') return ['animal', 'esprits', 'être', 'non être'].includes(value.toLocaleLowerCase('fr')) ? value.toLocaleLowerCase('fr') : 'Non renseigné';
     return value || 'Non précisé sur la planche';
   }
@@ -98,7 +105,7 @@ function readFact(creature, key) {
 
 function editorFactValue(creature, key) {
   const value = readFact(creature, key);
-  if (key === 'classification') return /^[1-8]x$/i.test(value) ? value.toLowerCase() : '';
+  if (key === 'classification') return normalizeClassification(value);
   if (key === 'status') return ['animal', 'esprits', 'être', 'non être'].includes(value.toLocaleLowerCase('fr')) ? value.toLocaleLowerCase('fr') : '';
   return /^non\s+(précis|spécifi|renseign)/iu.test(value) ? '' : value;
 }
@@ -169,9 +176,13 @@ function applySavedEdits() {
   });
   CREATURES.forEach((creature) => {
     if (creature.facts) {
-      delete creature.facts.classification;
-      delete creature.facts.status;
+      const classification = normalizeClassification(creature.facts.classification);
+      if (classification) creature.facts.classification = classification;
+      else delete creature.facts.classification;
       delete creature.facts.statut;
+      const status = String(creature.facts.status || '').trim().toLocaleLowerCase('fr');
+      if (['animal', 'esprits', 'être', 'non être'].includes(status)) creature.facts.status = status;
+      else delete creature.facts.status;
     }
     if (creature.publishedFacts) {
       delete creature.publishedFacts.classification;
@@ -192,7 +203,17 @@ function applySavedEdits() {
     if (typeof edit.filter === 'string') creature.filter = edit.filter;
     if (typeof edit.summary !== 'string' && typeof edit.description === 'string') creature.summary = cleanCreatureCategoryMentions(edit.description);
     if (edit.facts && typeof edit.facts === 'object') {
-      creature.facts = { ...(creature.facts || {}), ...edit.facts };
+      const editedFacts = { ...edit.facts };
+      const editedClassification = normalizeClassification(editedFacts.classification);
+      if (editedClassification) editedFacts.classification = editedClassification;
+      else delete editedFacts.classification;
+      delete editedFacts.statut;
+      if (Object.prototype.hasOwnProperty.call(editedFacts, 'status')) {
+        const editedStatus = String(editedFacts.status || '').trim().toLocaleLowerCase('fr');
+        if (['animal', 'esprits', 'être', 'non être'].includes(editedStatus)) editedFacts.status = editedStatus;
+        else delete editedFacts.status;
+      }
+      creature.facts = { ...(creature.facts || {}), ...editedFacts };
       if (creature.publishedFacts) {
         Object.entries(publishedFactAliases).forEach(([key, alias]) => {
           if (Object.prototype.hasOwnProperty.call(creature.publishedFacts, alias)
