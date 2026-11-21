@@ -212,6 +212,33 @@ function openReader(creature) {
   reader.showModal();
 }
 
+function renderPotionsPage() {
+  return `<section class="potion-library">
+    <div class="potion-page-heading"><div><p class="eyebrow">REGISTRE DES PRÉPARATIONS</p><h1>Potions</h1><p class="intro-copy">Formules, usages et méthodes de préparation conservés dans les archives.</p></div><div class="potion-page-stamp" aria-hidden="true">⚗</div></div>
+    <div class="collection-strip"><strong>${POTIONS.length}</strong><span>${POTIONS.length > 1 ? 'recettes' : 'recette'}</span><span class="strip-divider"></span><p>Notes de potions transmises à l’archive</p></div>
+    <div class="potion-list">${POTIONS.map(potionTemplate).join('')}</div>
+    <footer class="page-footer"><span>Archives de Havengard</span><span>Conservé avec soin · Consulté avec prudence</span></footer>
+  </section>`;
+}
+
+function potionTemplate(potion) {
+  const details = [
+    ['Utilisation', potion.usage],
+    ['Apparence et texture', potion.appearance],
+    ['Goût', potion.taste]
+  ];
+  return `<article class="potion-entry">
+    <header class="potion-entry-heading"><div><p class="eyebrow">FORMULE DE SOIN</p><h2>${escapeHtml(potion.name)}</h2><span class="potion-type">${escapeHtml(potion.type)}</span></div><span class="potion-entry-mark" aria-hidden="true">⚗</span></header>
+    <p class="potion-summary">${escapeHtml(potion.description)}</p>
+    <div class="potion-detail-grid">${details.map(([label, value]) => `<section class="potion-detail"><h3>${escapeHtml(label)}</h3><p>${escapeHtml(value)}</p></section>`).join('')}</div>
+    <div class="potion-work-grid">
+      <section class="potion-section"><h3>Ingrédients</h3><ul class="potion-ingredients">${potion.ingredients.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul></section>
+      <section class="potion-section"><h3>Préparation</h3><ol class="potion-steps">${potion.preparation.map((step) => `<li>${escapeHtml(step)}</li>`).join('')}</ol><p class="potion-incantation"><span>Incantation</span><strong>${escapeHtml(potion.incantation)}</strong></p><p class="potion-finishing">${escapeHtml(potion.finishing)}</p></section>
+    </div>
+    <aside class="potion-variant"><div><p class="eyebrow">VARIANTE</p><h3>${escapeHtml(potion.variant.name)}</h3><p>${escapeHtml(potion.variant.description)}</p></div><span aria-hidden="true">✦ ✦</span></aside>
+  </article>`;
+}
+
 function showSubject(section) {
   activeSection = section;
   document.querySelectorAll('.subject-link').forEach((button) => button.classList.toggle('active', button.dataset.section === section));
@@ -226,6 +253,8 @@ function showSubject(section) {
     document.querySelector('#page-content').innerHTML = bestiaryMarkup;
     bindBestiaryControls();
     renderGrid();
+  } else if (section === 'potions') {
+    document.querySelector('#page-content').innerHTML = renderPotionsPage();
   } else {
     document.querySelector('#page-content').innerHTML = `<div class="empty-subject"><div class="empty-subject-card"><span class="empty-glyph">${section === 'potions' ? '⚗' : section === 'sortileges' ? '✧' : section === 'histoire' ? '◷' : '❋'}</span><p class="eyebrow" style="justify-content:center">RAYON DE LA BIBLIOTHÈQUE</p><h1>${escapeHtml(subjectNames[section])}</h1><p>Ce rayon est prêt à accueillir ses notes. Le dossier fourni contient uniquement les planches du bestiaire ; aucun document de cette matière n’y figure encore.</p><small>Source actuelle : 50 planches illustrées · Bestiaire RP Light</small></div></div><footer class="page-footer"><span>Archives de Havengard</span><span>Conservé avec soin · Consulté avec prudence</span></footer>`;
   }
