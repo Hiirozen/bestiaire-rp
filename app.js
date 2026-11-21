@@ -140,7 +140,14 @@ function getPotions() {
 
 function getSubjectNotes(section) {
   const state = loadLibraryState();
-  return Array.isArray(state.notes[section]) ? state.notes[section] : [];
+  const saved = Array.isArray(state.notes[section]) ? state.notes[section] : [];
+  const defaults = Array.isArray(SUBJECT_NOTES[section]) ? SUBJECT_NOTES[section] : [];
+  const savedById = new Map(saved.map((note) => [note.id, note]));
+  const defaultIds = new Set(defaults.map((note) => note.id));
+  return [
+    ...defaults.map((note) => ({ ...note, ...(savedById.get(note.id) || {}) })),
+    ...saved.filter((note) => !defaultIds.has(note.id))
+  ];
 }
 
 function applySavedEdits() {
