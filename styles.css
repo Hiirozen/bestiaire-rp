@@ -309,3 +309,12 @@ h1 { margin: 13px 0 7px; color: #f2eedf; font: 500 clamp(36px, 4.5vw, 58px)/1.1 
 
 .image-zoom-trigger { display: block; width: 100%; padding: 0; border: 0; border-radius: 5px; background: transparent; cursor: zoom-in; }
 .image-zoom-trigger:focus-visible { outline: 2px solid var(--gold, #d9b878); outline-offset: 3px; }
+
+.subject-note-title { padding: 0; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.subject-note-title:hover { color: var(--gold-soft); }
+.subject-note-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.subject-note-actions .quiet-button { margin-top: 0; }
+.note-reader-dialog { width: min(900px, calc(100vw - 34px)); max-height: min(92vh, 1000px); overflow-y: auto; }
+.note-reader-summary { font-size: 13px; }
+.note-reader-body { margin-top: 18px; color: #c5ccbe; font-size: 13px; line-height: 1.8; }
+.note-reader-details { margin-top: 22px; }

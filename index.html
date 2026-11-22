@@ -7,9 +7,9 @@
     <meta name="description" content="Les archives magiques de Havengard : bestiaire illustré et ressources de cours." />
     <title>Archives de Havengard — Bestiaire</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="styles.css?v=20261121-image-zoom1" />
+    <link rel="stylesheet" href="styles.css?v=20261122-note-dialog1" />
     <script src="catalog.js?v=20261121-source-ranks1" defer></script>
-    <script src="app.js?v=20261121-image-zoom1" defer></script>
+    <script src="app.js?v=20261122-note-dialog1" defer></script>
   </head>
   <body>
     <div class="site-shell">
@@ -136,6 +136,10 @@
     <dialog class="reader-dialog potion-dialog" id="potion-dialog" aria-label="Fiche de potion">
       <div class="potion-dialog-controls"><button class="icon-button close-potion" type="button" aria-label="Fermer la fiche de potion">×</button></div>
       <div id="potion-reader-content"></div>
+    </dialog>
+
+    <dialog class="reader-dialog note-reader-dialog" id="note-dialog" aria-labelledby="note-reader-title">
+      <div id="note-reader-content"></div>
     </dialog>
 
     <dialog class="reader-dialog content-editor-dialog" id="content-editor-dialog" aria-label="Modifier une fiche">

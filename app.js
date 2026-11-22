@@ -10,6 +10,7 @@ const bestiaryMarkup = document.querySelector('#page-content').innerHTML;
 const searchInput = document.querySelector('#search-input');
 const filters = document.querySelector('#filters');
 const reader = document.querySelector('#reader-dialog');
+const noteDialog = document.querySelector('#note-dialog');
 const imageDialog = document.querySelector('#image-dialog');
 const editStorageKey = 'havengard-creature-edits-v1';
 const libraryStorageKey = 'havengard-library-edits-v1';
@@ -449,8 +450,23 @@ function parsePotionSteps(value) {
 }
 
 function noteCardTemplate(section, note) {
-  const details = (note.details || []).map((item) => `<div><dt>${escapeHtml(item.label)}</dt><dd>${escapeHtml(item.value)}</dd></div>`).join('');
-  return `<article class="subject-note-card"><p class="eyebrow">${escapeHtml(note.type || subjectNames[section])}</p><h2>${escapeHtml(note.title)}</h2>${note.summary ? `<p class="subject-note-summary">${escapeHtml(note.summary)}</p>` : ''}${note.content ? `<details class="subject-note-content"><summary>Lire la fiche</summary><div>${escapeHtml(note.content).replace(/\n/g, '<br>')}</div></details>` : ''}${details ? `<dl class="subject-note-details">${details}</dl>` : ''}<button class="quiet-button" type="button" data-edit-note="${escapeHtml(note.id)}" data-category="${escapeHtml(section)}">Modifier cette fiche</button></article>`;
+  const noteId = escapeHtml(note.id);
+  const category = escapeHtml(section);
+  const details = (note.details || []).map((item) => '<div><dt>' + escapeHtml(item.label) + '</dt><dd>' + escapeHtml(item.value) + '</dd></div>').join('');
+  const summary = note.summary ? '<p class="subject-note-summary">' + escapeHtml(note.summary) + '</p>' : '';
+  const facts = details ? '<dl class="subject-note-details">' + details + '</dl>' : '';
+  const label = escapeHtml(note.type || subjectNames[section]);
+  return '<article class="subject-note-card"><p class="eyebrow">' + label + '</p><h2><button class="subject-note-title" type="button" data-open-note="' + noteId + '" data-category="' + category + '">' + escapeHtml(note.title) + '</button></h2>' + summary + facts + '<div class="subject-note-actions"><button class="quiet-button" type="button" data-open-note="' + noteId + '" data-category="' + category + '">Ouvrir la fiche</button><button class="quiet-button" type="button" data-edit-note="' + noteId + '" data-category="' + category + '">Modifier cette fiche</button></div></article>';
+}
+
+function openNoteReader(section, note) {
+  const content = note.content ? '<div class="note-reader-body">' + escapeHtml(note.content).replace(/\n/g, '<br>') + '</div>' : '';
+  const details = (note.details || []).map((item) => '<div><dt>' + escapeHtml(item.label) + '</dt><dd>' + escapeHtml(item.value) + '</dd></div>').join('');
+  const facts = details ? '<dl class="subject-note-details note-reader-details">' + details + '</dl>' : '';
+  document.querySelector('#note-reader-content').innerHTML =
+    '<div class="reader-topline"><div><p class="eyebrow">' + escapeHtml(note.type || subjectNames[section]) + '</p><h2 id="note-reader-title">' + escapeHtml(note.title) + '</h2></div><button class="icon-button close-note-reader" type="button" aria-label="Fermer la fiche">×</button></div>' +
+    (note.summary ? '<p class="subject-note-summary note-reader-summary">' + escapeHtml(note.summary) + '</p>' : '') + content + facts;
+  noteDialog.showModal();
 }
 
 function renderNotesPage(section) {
@@ -612,6 +628,9 @@ document.addEventListener('click', (event) => {
 document.querySelector('.close-reader').addEventListener('click', () => reader.close());
 document.querySelector('.close-image').addEventListener('click', () => imageDialog.close());
 document.querySelector('.close-potion').addEventListener('click', () => document.querySelector('#potion-dialog').close());
+noteDialog.addEventListener('click', (event) => {
+  if (event.target.closest('.close-note-reader') || event.target === noteDialog) noteDialog.close();
+});
 reader.addEventListener('click', (event) => { if (event.target === reader) reader.close(); });
 imageDialog.addEventListener('click', (event) => { if (event.target === imageDialog) imageDialog.close(); });
 document.querySelector('#potion-dialog').addEventListener('click', (event) => {
@@ -635,6 +654,13 @@ document.querySelector('#page-content').addEventListener('click', (event) => {
   const addNote = event.target.closest('[data-add-note]');
   if (addNote) {
     openNoteEditor(addNote.dataset.addNote);
+    return;
+  }
+  const openNote = event.target.closest('[data-open-note]');
+  if (openNote) {
+    const section = openNote.dataset.category;
+    const note = getSubjectNotes(section).find((item) => item.id === openNote.dataset.openNote);
+    if (note) openNoteReader(section, note);
     return;
   }
   const editNote = event.target.closest('[data-edit-note]');
