@@ -197,10 +197,10 @@ function applySavedEdits() {
   let removedTruncatedSummaries = false;
   Object.values(edits).forEach((edit) => {
     if (!edit || typeof edit !== 'object') return;
-    const savedText = [edit.summary, edit.description].filter((value) => typeof value === 'string').join('\\n');
-    const containsTruncatedSummary = /\\bHabita\\s*:/iu.test(savedText)
-      || /\\bStatu\\s+e\\s+comportemen/iu.test(savedText)
-      || /\\b(?:Peti|produisan|accélèren|peuven\\s+roubler|sep queues)\\b/iu.test(savedText);
+    const savedText = [edit.summary, edit.description].filter((value) => typeof value === 'string').join('\n');
+    const containsTruncatedSummary = /\bHabita\s*:/iu.test(savedText)
+      || /\bStatu\s+e\s+comportemen/iu.test(savedText)
+      || /\b(?:Peti|produisan|accélèren|peuven\s+roubler|sep queues)\b/iu.test(savedText);
     if (!containsTruncatedSummary) return;
     delete edit.summary;
     delete edit.description;
