@@ -1,4 +1,3 @@
-Attempting to perform the InitializeDefaultDrives operation on the 'FileSystem' provider failed.
 const subjectNames = {
   bestiaire: 'Bestiaire',
   potions: 'Potions',
@@ -779,4 +778,3 @@ document.addEventListener('keydown', (event) => {
 applySavedEdits();
 bindBestiaryControls();
 renderGrid();
-
