@@ -1,3 +1,4 @@
+Attempting to perform the InitializeDefaultDrives operation on the 'FileSystem' provider failed.
 const subjectNames = {
   bestiaire: 'Bestiaire',
   potions: 'Potions',
@@ -194,6 +195,23 @@ function applySavedEdits() {
     if (typeof creature.description === 'string') creature.description = cleanCreatureCategoryMentions(creature.description);
   });
   const edits = loadSavedEdits();
+  const mauresutEdit = edits['notice-42'];
+  if (mauresutEdit && typeof mauresutEdit === 'object') {
+    const savedSummary = typeof mauresutEdit.summary === 'string'
+      ? mauresutEdit.summary
+      : mauresutEdit.description;
+    const containsOldTruncatedMauresutText = typeof savedSummary === 'string' && [
+      /félin mythique à sep queues/iu,
+      /peuven\s+roubler/iu,
+      /cloche\s+es d['’]or/iu,
+      /statu\s+e\s+comportemen/iu
+    ].some((pattern) => pattern.test(savedSummary));
+    if (containsOldTruncatedMauresutText) {
+      delete mauresutEdit.summary;
+      delete mauresutEdit.description;
+      saveEdits(edits);
+    }
+  }
   CREATURES.forEach((creature) => {
     const edit = edits[creature.id];
     if (!edit || typeof edit !== 'object') return;
@@ -761,3 +779,4 @@ document.addEventListener('keydown', (event) => {
 applySavedEdits();
 bindBestiaryControls();
 renderGrid();
+
